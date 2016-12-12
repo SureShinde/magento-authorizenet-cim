@@ -49,37 +49,43 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         return $request;
     }
 
-    public function processChargeCreditCardRequest(Mage_Sales_Model_Order_Payment $payment, Mage_Sales_Model_Order $order, $amount, $action = 'authOnlyTransaction')
+    public function processChargeCreditCardRequest(
+        Mage_Sales_Model_Order_Payment $payment,
+        Mage_Sales_Model_Order $order,
+        $amount,
+        $action = 'authOnlyTransaction'
+    )
     {
         // Create the payment data for a credit card
         $creditCard = new AnetAPI\CreditCardType();
-            $creditCard->setCardNumber($payment->getCcNumber());
-            $creditCard->setExpirationDate($payment->getCcExpMonth().'-'.$payment->getCcExpYear());
-            $creditCard->setCardCode($payment->getCcCid());
+        $creditCard->setCardNumber($payment->getCcNumber());
+        $creditCard->setExpirationDate($payment->getCcExpMonth() . '-' . $payment->getCcExpYear());
+        $creditCard->setCardCode($payment->getCcCid());
         $paymentOne = new AnetAPI\PaymentType();
-            $paymentOne->setCreditCard($creditCard);
+        $paymentOne->setCreditCard($creditCard);
 
         $items = array();
         foreach ($order->getAllVisibleItems() as $productItem){
             $item = new AnetAPI\LineItemType();
             $item->setItemId($productItem->getSku())
                 ->setName($productItem->getName())
-                ->setQuantity($productItem->getQtyOrdered());
-                //->setUnitPrice($productItem->);
+                ->setQuantity($productItem->getQtyOrdered())
+                ->setUnitPrice($productItem->getPrice());
             $items[] = $item;
         }
 
-        //create a transaction
+        // create a transaction
         $transactionRequest = new AnetAPI\TransactionRequestType();
-            $transactionRequest->setTransactionType($action);//authCaptureTransaction
-            $transactionRequest->setAmount($amount);
-            $transactionRequest->setLineItems($items);
-            $transactionRequest->setPayment($paymentOne);
+        $transactionRequest->setTransactionType($action);//authCaptureTransaction
+        $transactionRequest->setAmount($amount);
+        $transactionRequest->setLineItems($items);
+        $transactionRequest->setPayment($paymentOne);
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-            $request->setTransactionRequest( $transactionRequest);
+        $request->setTransactionRequest( $transactionRequest);
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
+
         if ($response != null) {
             if ($response->getMessages()->getResultCode() == 'Ok') {
                 $tresponse = $response->getTransactionResponse();
