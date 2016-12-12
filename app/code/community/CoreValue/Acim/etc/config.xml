@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <CoreValue_Acim>
+            <version>0.1.0</version>
+        </CoreValue_Acim>
+    </modules>
+
+    <global>
+        <models>
+            <corevalue_acim>
+                <class>CoreValue_Acim_Model</class>
+                <resourceModel>corevalue_acim_resource</resourceModel>
+            </corevalue_acim>
+
+            <corevalue_acim_resource>
+                <class>CoreValue_Acim_Model_Resource</class>
+                <entities>
+                    <customer_profile>
+                        <table>corevalue_acim_profile</table>
+                    </customer_profile>
+                    <payment_profile>
+                        <table>corevalue_acim_payment</table>
+                    </payment_profile>
+                </entities>
+            </corevalue_acim_resource>
+        </models>
+
+        <resources>
+            <corevalue_acim_setup>
+                <setup>
+                    <module>CoreValue_Acim</module>
+                </setup>
+            </corevalue_acim_setup>
+        </resources>
+
+        <blocks>
+            <corevalue_acim>
+                <class>CoreValue_Acim_Block</class>
+            </corevalue_acim>
+        </blocks>
+
+        <helpers>
+            <corevalue_acim>
+                <class>CoreValue_Acim_Helper</class>
+            </corevalue_acim>
+        </helpers>
+    </global>
+
+    <frontend>
+        <layout>
+            <updates>
+                <corevalue_acim>
+                    <file>corevalue_acim.xml</file>
+                </corevalue_acim>
+            </updates>
+        </layout>
+    </frontend>
+
+    <default>
+        <payment>
+            <corevalue_acim>
+                <active>0</active>
+                <model>corevalue_acim/paymentMethod</model>
+                <order_status>processing</order_status>
+                <title>Authorize.net Customer Information Manager</title>
+                <live_mode>0</live_mode>
+                <api_key backend_model="adminhtml/system_config_backend_encrypted"/>
+                <transaction_key backend_model="adminhtml/system_config_backend_encrypted"/>
+                <cctypes>AE,VI,MC,DI</cctypes>
+                <payment_action>authorize_capture</payment_action>
+                <allowspecific>0</allowspecific>
+            </corevalue_acim>
+        </payment>
+    </default>
+</config>
