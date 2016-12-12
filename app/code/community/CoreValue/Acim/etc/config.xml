@@ -63,7 +63,7 @@
                 <active>0</active>
                 <model>corevalue_acim/paymentMethod</model>
                 <order_status>processing</order_status>
-                <title>Authorize.net Customer Information Manager</title>
+                <title>Authorize.net CIM</title>
                 <live_mode>0</live_mode>
                 <api_key backend_model="adminhtml/system_config_backend_encrypted"/>
                 <transaction_key backend_model="adminhtml/system_config_backend_encrypted"/>

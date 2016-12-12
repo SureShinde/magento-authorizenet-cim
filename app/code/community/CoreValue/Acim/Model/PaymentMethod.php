@@ -17,21 +17,55 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     const ACTION_AUTHORIZE         = 'authorize';
     const ACTION_AUTHORIZE_CAPTURE = 'authorize_capture';
 
+
     const RESPONSE_APPROVED = 1;
     const RESPONSE_DECLINED = 2;
     const RESPONSE_ERROR = 3;
     const RESPONSE_HELD_FOR_REVIEW = 4;
 
+    /**
+     * @var bool
+     */
     protected $_isGateway               = true;
+    /**
+     * @var bool
+     */
     protected $_canAuthorize            = true;
+    /**
+     * @var bool
+     */
     protected $_canCapture              = true;
+    /**
+     * @var bool
+     */
     protected $_canCapturePartial       = true;
+    /**
+     * @var bool
+     */
     protected $_canRefund               = true;
+    /**
+     * @var bool
+     */
     protected $_canRefundInvoicePartial = true;
+    /**
+     * @var bool
+     */
     protected $_canVoid                 = true;
+    /**
+     * @var bool
+     */
     protected $_canUseInternal          = true;
+    /**
+     * @var bool
+     */
     protected $_canUseCheckout          = true;
+    /**
+     * @var bool
+     */
     protected $_canUseForMultishipping  = true;
+    /**
+     * @var bool
+     */
     protected $_canSaveCc = false;
 
     /**
@@ -57,6 +91,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         if (!($data instanceof Varien_Object)) {
             $data = new Varien_Object($data);
         }
+
         $info = $this->getInfoInstance();
         $info->setCcType($data->getCcType())
             ->setCcOwner($data->getCcOwner())
@@ -71,17 +106,22 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         ;
 
         $params = Mage::app()->getRequest()->getParams();
-        if ($params['profile_id']) {
+        if (!empty($params['profile_id']) && $params['profile_id']) {
             $info->setAdditionalInformation('profile_id', $params['profile_id']);
         }
-        if ($params['payment_id']) {
+        if (!empty($params['payment_id']) && $params['payment_id']) {
             $info->setAdditionalInformation('payment_id', $params['payment_id']);
         }
 
         return $this;
     }
 
-    public function getProfileAndPaymentIds(Varien_Object $payment){
+    /**
+     * @param Varien_Object $payment
+     * @return array
+     */
+    public function getProfileAndPaymentIds(Varien_Object $payment)
+    {
         $profileId = $payment->getAdditionalInformation('profile_id');
         $paymentId = $payment->getAdditionalInformation('payment_id');
 
@@ -167,7 +207,6 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     public function capture(Varien_Object $payment, $amount)
     {
         parent::capture($payment, $amount);
-
     }
 
     /**
@@ -191,6 +230,5 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     public function void(Varien_Object $payment)
     {
         parent::void($payment);
-
     }
 }
