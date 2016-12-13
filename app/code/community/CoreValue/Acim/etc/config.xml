@@ -16,12 +16,12 @@
             <corevalue_acim_resource>
                 <class>CoreValue_Acim_Model_Resource</class>
                 <entities>
-                    <customer_profile>
-                        <table>corevalue_acim_profile</table>
-                    </customer_profile>
-                    <payment_profile>
-                        <table>corevalue_acim_payment</table>
-                    </payment_profile>
+                    <profile_customer>
+                        <table>corevalue_acim_profile_customer</table>
+                    </profile_customer>
+                    <profile_payment>
+                        <table>corevalue_acim_profile_payment</table>
+                    </profile_payment>
                 </entities>
             </corevalue_acim_resource>
         </models>

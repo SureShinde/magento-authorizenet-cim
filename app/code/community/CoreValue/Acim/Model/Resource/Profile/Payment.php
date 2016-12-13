@@ -1,10 +1,10 @@
 <?php
 
-class CoreValue_Acim_Model_Resource_CustomerProfile extends Mage_Core_Model_Resource_Db_Abstract
+class CoreValue_Acim_Model_Resource_Profile_Payment extends Mage_Core_Model_Resource_Db_Abstract
 {
     protected function _construct()
     {
-        $this->_init('corevalue_acim/customerProfile','profile_id');
+        $this->_init('corevalue_acim/profile_payment', 'id');
     }
 
     /**

@@ -11,7 +11,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function getProfileModel($customerId, $email)
     {
-        $collection = Mage::getResourceModel('corevalue_acim/profile_collection')
+        $collection = Mage::getResourceModel('corevalue_acim/profile_customer_collection')
             ->addFieldToFilter('customer_id', $customerId)
             ->addFieldToFilter('email', $email);
 
@@ -25,7 +25,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function getPaymentModel($profileId, $paymentId)
     {
-        $collection = Mage::getResourceModel('corevalue_acim/paymentProfile_collection')
+        $collection = Mage::getResourceModel('corevalue_acim/profile_payment_collection')
             ->addFieldToFilter('profile_id', $profileId)
             ->addFieldToFilter('payment_id', $paymentId);
 
@@ -39,7 +39,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function getPaymentCollection($customerId, $email)
     {
-        return Mage::getResourceModel('corevalue_acim/paymentProfile_collection')
+        return Mage::getResourceModel('corevalue_acim/profile_payment_collection')
             ->addFieldToFilter('customer_id', $customerId)
             ->addFieldToFilter('email', $email);
     }
@@ -50,7 +50,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function getPaymentCollection2($profile_id)
     {
-        return Mage::getResourceModel('corevalue_acim/paymentProfile_collection')
+        return Mage::getResourceModel('corevalue_acim/profile_payment_collection')
             ->addFieldToFilter('profile_id', $profile_id);
     }
 }

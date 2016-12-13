@@ -106,11 +106,8 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         ;
 
         $params = Mage::app()->getRequest()->getParams();
-        if (!empty($params['profile_id']) && $params['profile_id']) {
-            $info->setAdditionalInformation('profile_id', $params['profile_id']);
-        }
-        if (!empty($params['payment_id']) && $params['payment_id']) {
-            $info->setAdditionalInformation('payment_id', $params['payment_id']);
+        if (!empty($params['payment']['payment_id']) && $params['payment']['payment_id']) {
+            $info->setAdditionalInformation('payment_id', $params['payment']['payment_id']);
         }
 
         return $this;
@@ -129,7 +126,9 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
             $order = $payment->getOrder();
             $customerId = $order->getCustomerId();
             $email = $order->getCustomerEmail();
+            /* @var $helper CoreValue_Acim_Helper_Data */
             $helper = Mage::helper('corevalue_acim');
+
             $paymentProfileCollection = $helper->getPaymentCollection($customerId, $email);
         }
 
@@ -146,48 +145,74 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function authorize(Varien_Object $payment, $amount)
     {
+        /* @var $payment Mage_Sales_Model_Order_Payment */
         parent::authorize($payment, $amount);
 
-        $helperTransactions = Mage::helper('corevalue_acim/paymentTransactions');
+        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
+        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
+        /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
+        $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper                 = Mage::helper('corevalue_acim');
+        /* @var $order Mage_Sales_Model_Order */
+        $order                  = $payment->getOrder();
 
-        $isGuest = $payment->getOrder()->getCustomerIsGuest();
+        $isGuest = $order->getCustomerIsGuest();
+
         if (!$isGuest) {
             list($profileId, $paymentId) = $this->getProfileAndPaymentIds($payment);
 
-
             if ($profileId) {
                 if (empty($paymentId)) {
-                    $helperProfile = Mage::helper('corevalue_acim/customerProfiles');
-                    $response = $helperProfile->processCreatePaymentProfileRequest($profileId, $billingInfo);
+                    $response = $helperProfile->processCreatePaymentProfileRequest($profileId, $payment);
                     $paymentId = $response->getCustomerPaymentProfileId();
                 }
-                $response = $helperTransactions->processChargeCustomerProfileRequest($payment->getOrder(), $profileId, $paymentId, $amount);
+
+                $response = $helperTransactions->processChargeCustomerProfileRequest(
+                    $order,
+                    $profileId,
+                    $paymentId,
+                    $amount
+                );
             } else {
-                $response = $helperTransactions->processChargeCreditCardRequest($payment, $payment->getOrder(), $amount);
+                $response = $helperTransactions->processChargeCreditCardRequest(
+                    $payment,
+                    $order,
+                    $amount
+                );
 
-                $helper = Mage::helper('corevalue_acim');
-                $transactionId = $response->getTransactionResponse()->getTransId();
-                $customerId = $payment->getOrder()->getCustomerId();
-                $customerEmail = $payment->getOrder()->getCustomerEmail();
-                $responseProfile = $helper->processCreateCustomerProfileFromTransactionRequest($transactionId, $customerId, $customerEmail);
+                $transactionId  = $response->getTransactionResponse()->getTransId();
+                $customerId     = $order->getCustomerId();
+                $customerEmail  = $order->getCustomerEmail();
 
-                $customerProfile = Mage::getModel('corevalue_acim/customerProfile');
-                $customerProfile->setProfileId($responseProfile->getCustomerProfileId())
+                $responseProfile = $helperProfile->processCreateCustomerProfileFromTransactionRequest(
+                    $transactionId,
+                    $customerId,
+                    $customerEmail
+                );
+
+                $profileCustomer = Mage::getModel('corevalue_acim/profile_customer')
+                    ->load($responseProfile->getCustomerProfileId(), 'profile_id');
+
+                $profileCustomer
+                    ->setProfileId($responseProfile->getCustomerProfileId())
                     ->setCustomerId($customerId)
                     ->setEmail($customerEmail)
-                    ->save();
+                    ->save()
+                ;
 
                 foreach ($responseProfile->getCustomerPaymentProfileIdList() as $paymentId) {
-                    $customerProfile = Mage::getModel('corevalue_acim/customerProfile')->load($paymentId,'payment_id');
-                    $ccExpirationDate = $payment->getCcExpYear().'-'.$payment->getCcExpMonth();
-                    $date = DateTime::createFromFormat('Y-m', $ccExpirationDate);
-                    $ccExpirationDate = $ccExpirationDate.'-'.$date->format('t');
-                    $customerProfile->setProfileId($responseProfile->getCustomerProfileId())
+                    $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load($paymentId, 'payment_id');
+
+                    $paymentProfile
+                        ->setProfileId($responseProfile->getCustomerProfileId())
+                        ->setPaymentId($paymentId)
                         ->setCustomerId($customerId)
                         ->setEmail($customerEmail)
-                        ->setCCLast4($payment->getCcLast4())
-                        ->setExpirationDate($ccExpirationDate)
-                        ->save();
+                        ->setCcLast4($payment->getCcLast4())
+                        ->setExpirationDate($payment->getCcExpYear() . '-' . $payment->getCcExpMonth())
+                        ->save()
+                    ;
                 }
             }
         } else {
@@ -218,7 +243,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function refund(Varien_Object $payment, $amount)
     {
-        parent::refund($payment, $amount);
+        return parent::refund($payment, $amount);
     }
 
     /**
@@ -229,6 +254,19 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function void(Varien_Object $payment)
     {
-        parent::void($payment);
+        return parent::void($payment);
+    }
+
+    /**
+     * @return $this|Mage_Payment_Model_Abstract
+     */
+    public function validate()
+    {
+        $info = $this->getInfoInstance();
+
+        if ($info->getAdditionalInformation('payment_id')) {
+            return $this;
+        }
+        return parent::validate();
     }
 }

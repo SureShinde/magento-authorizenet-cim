@@ -25,8 +25,14 @@ use net\authorize\api\controller as AnetController;
 class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstract
 {
 
+    /**
+     * @var string
+     */
     protected $_mode = \net\authorize\api\constants\ANetEnvironment::SANDBOX;
 
+    /**
+     * CoreValue_Acim_Helper_PaymentTransactions constructor.
+     */
     public function __construct()
     {
         $liveMode = Mage::getStoreConfig('payment/corevalue_acim/live_mode');
@@ -35,20 +41,32 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         }
     }
 
+    /**
+     * @param $request
+     * @return mixed
+     */
     public function initNewRequest($request)
     {
         $apiKey = Mage::getStoreConfig('payment/corevalue_acim/api_key');
         $transactionKey = Mage::getStoreConfig('payment/corevalue_acim/transaction_key');
 
         $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
-            $merchantAuthentication->setName($apiKey);
-            $merchantAuthentication->setTransactionKey($transactionKey);
+        $merchantAuthentication->setName($apiKey);
+        $merchantAuthentication->setTransactionKey($transactionKey);
+
         $request->setMerchantAuthentication($merchantAuthentication);
-            $request->setRefId('ref' . time());
+        $request->setRefId('ref' . time());
 
         return $request;
     }
 
+    /**
+     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Mage_Sales_Model_Order $order
+     * @param $amount
+     * @param string $action
+     * @return AnetAPI\AnetApiResponseType
+     */
     public function processChargeCreditCardRequest(
         Mage_Sales_Model_Order_Payment $payment,
         Mage_Sales_Model_Order $order,
@@ -83,14 +101,15 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
         $request->setTransactionRequest( $transactionRequest);
+
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
 
         if ($response != null) {
-            if ($response->getMessages()->getResultCode() == 'Ok') {
-                $tresponse = $response->getTransactionResponse();
+            $tresponse = $response->getTransactionResponse();
 
-                if ($tresponse != null && $tresponse->getMessages() != null) {
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+               /* if ($tresponse != null && $tresponse->getMessages() != null) {
                     echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
                     echo "Charge Credit Card AUTH CODE : " . $tresponse->getAuthCode() . "\n";
                     echo "Charge Credit Card TRANS ID  : " . $tresponse->getTransId() . "\n";
@@ -102,18 +121,17 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                         echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
                         echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
                     }
-                }
+                }*/
             } else {
-                $tresponse = $response->getTransactionResponse();
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $tresponse->getErrors()[0]->getErrorCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $tresponse->getErrors()[0]->getErrorText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $tresponse->getErrors()[0]->getErrorCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $tresponse->getErrors()[0]->getErrorText() . "\n"
                     );
                 } else {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                     );
                 }
             }
@@ -124,30 +142,47 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         return $response;
     }
 
-    public function processChargeCustomerProfileRequest(Mage_Sales_Model_Order $order, $profileId, $paymentId, $amount, $action = 'authOnlyTransaction')
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @param $profileId
+     * @param $paymentId
+     * @param $amount
+     * @param string $action
+     * @return AnetAPI\AnetApiResponseType
+     */
+    public function processChargeCustomerProfileRequest(
+        Mage_Sales_Model_Order $order,
+        $profileId,
+        $paymentId,
+        $amount,
+        $action = 'authOnlyTransaction'
+    )
     {
         $paymentProfile = new AnetAPI\PaymentProfileType();
-            $paymentProfile->setPaymentProfileId($paymentId);
+        $paymentProfile->setPaymentProfileId($paymentId);
+
         $profileToCharge = new AnetAPI\CustomerProfilePaymentType();
-            $profileToCharge->setCustomerProfileId($profileId);
-            $profileToCharge->setPaymentProfile($paymentProfile);
+        $profileToCharge->setCustomerProfileId($profileId);
+        $profileToCharge->setPaymentProfile($paymentProfile);
 
 
         $transactionRequest = new AnetAPI\TransactionRequestType();
-            $transactionRequest->setTransactionType($action);//authCaptureTransaction
-            $transactionRequest->setAmount($amount);
-            $transactionRequest->setProfile($profileToCharge);
+        $transactionRequest->setTransactionType($action);//authCaptureTransaction
+        $transactionRequest->setAmount($amount);
+        $transactionRequest->setProfile($profileToCharge);
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-            $request->setTransactionRequest($transactionRequest);
+
+        $request->setTransactionRequest($transactionRequest);
 
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
-        if ($response != null) {
-            if ($response->getMessages()->getResultCode() == 'Ok') {
-                $tresponse = $response->getTransactionResponse();
 
-                if ($tresponse != null && $tresponse->getMessages() != null) {
+        if ($response != null) {
+            $tresponse = $response->getTransactionResponse();
+
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                /*if ($tresponse != null && $tresponse->getMessages() != null) {
                     echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
                     echo "Charge Customer Profile APPROVED  :" . "\n";
                     echo " Charge Customer Profile AUTH CODE : " . $tresponse->getAuthCode() . "\n";
@@ -160,18 +195,17 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                         echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
                         echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
                     }
-                }
+                }*/
             } else {
-                $tresponse = $response->getTransactionResponse();
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $tresponse->getErrors()[0]->getErrorCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $tresponse->getErrors()[0]->getErrorText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $tresponse->getErrors()[0]->getErrorCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $tresponse->getErrors()[0]->getErrorText() . "\n"
                     );
                 } else {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                     );
                 }
             }
@@ -182,23 +216,28 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         return $response;
     }
 
+    /**
+     * @param $transactionId
+     * @return AnetAPI\AnetApiResponseType
+     */
     public function processCaptureAuthorizedAmountRequest($transactionId)
     {
         // Now capture the previously authorized  amount
         $transactionRequest = new AnetAPI\TransactionRequestType();
-            $transactionRequest->setTransactionType('priorAuthCaptureTransaction');
-            $transactionRequest->setRefTransId($transactionId);
+        $transactionRequest->setTransactionType('priorAuthCaptureTransaction');
+        $transactionRequest->setRefTransId($transactionId);
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-            $request->setTransactionRequest($transactionRequest);
+        $request->setTransactionRequest($transactionRequest);
 
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
-        if ($response != null) {
-            if ($response->getMessages()->getResultCode() == 'Ok') {
-                $tresponse = $response->getTransactionResponse();
 
-                if ($tresponse != null && $tresponse->getMessages() != null) {
+        if ($response != null) {
+            $tresponse = $response->getTransactionResponse();
+
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                /*if ($tresponse != null && $tresponse->getMessages() != null) {
                     echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
                     echo "Successful." . "\n";
                     echo "Capture Previously Authorized Amount, Trans ID : " . $tresponse->getRefTransId() . "\n";
@@ -210,18 +249,17 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                         echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
                         echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
                     }
-                }
+                }*/
             } else {
-                $tresponse = $response->getTransactionResponse();
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $tresponse->getErrors()[0]->getErrorCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $tresponse->getErrors()[0]->getErrorText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $tresponse->getErrors()[0]->getErrorCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $tresponse->getErrors()[0]->getErrorText() . "\n"
                     );
                 } else {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                     );
                 }
             }
@@ -232,31 +270,38 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         return $response;
     }
 
+    /**
+     * @param $transactionId
+     * @param $amount
+     * @param $last4
+     * @return AnetAPI\AnetApiResponseType
+     */
     public function processRefundTransactionRequest($transactionId, $amount, $last4)
     {
         // Create the payment data for a credit card
         $creditCard = new AnetAPI\CreditCardType();
-            $creditCard->setCardNumber($last4);
+        $creditCard->setCardNumber($last4);
         $paymentOne = new AnetAPI\PaymentType();
-            $paymentOne->setCreditCard($creditCard);
+        $paymentOne->setCreditCard($creditCard);
 
         //create a transaction
         $transactionRequest = new AnetAPI\TransactionRequestType();
-            $transactionRequest->setTransactionType('refundTransaction');
-            $transactionRequest->setRefTransId($transactionId);
-            $transactionRequest->setAmount($amount);
-            $transactionRequest->setPayment($paymentOne);
+        $transactionRequest->setTransactionType('refundTransaction');
+        $transactionRequest->setRefTransId($transactionId);
+        $transactionRequest->setAmount($amount);
+        $transactionRequest->setPayment($paymentOne);
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-            $request->setTransactionRequest($transactionRequest);
+        $request->setTransactionRequest($transactionRequest);
 
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
-        if ($response != null) {
-            if ($response->getMessages()->getResultCode() == 'Ok') {
-                $tresponse = $response->getTransactionResponse();
 
-                if ($tresponse != null && $tresponse->getMessages() != null) {
+        if ($response != null) {
+            $tresponse = $response->getTransactionResponse();
+
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                /*if ($tresponse != null && $tresponse->getMessages() != null) {
                     echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
                     echo "Refund SUCCESS: " . $tresponse->getTransId() . "\n";
                     echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
@@ -267,18 +312,17 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                         echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
                         echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
                     }
-                }
+                }*/
             } else {
-                $tresponse = $response->getTransactionResponse();
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $tresponse->getErrors()[0]->getErrorCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $tresponse->getErrors()[0]->getErrorText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $tresponse->getErrors()[0]->getErrorCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $tresponse->getErrors()[0]->getErrorText() . "\n"
                     );
                 } else {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                     );
                 }
             }
@@ -289,22 +333,27 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         return $response;
     }
 
+    /**
+     * @param $transactionId
+     * @return AnetAPI\AnetApiResponseType
+     */
     public function processVoidTransactionRequest($transactionId)
     {
         $transactionRequest = new AnetAPI\TransactionRequestType();
-            $transactionRequest->setTransactionType('voidTransaction');
-            $transactionRequest->setRefTransId($transactionId);
+        $transactionRequest->setTransactionType('voidTransaction');
+        $transactionRequest->setRefTransId($transactionId);
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-            $request->setTransactionRequest($transactionRequest);
+        $request->setTransactionRequest($transactionRequest);
 
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
-        if ($response != null) {
-            if ($response->getMessages()->getResultCode() == 'Ok') {
-                $tresponse = $response->getTransactionResponse();
 
-                if ($tresponse != null && $tresponse->getMessages() != null) {
+        if ($response != null) {
+            $tresponse = $response->getTransactionResponse();
+
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                /*if ($tresponse != null && $tresponse->getMessages() != null) {
                     echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
                     echo " Void transaction SUCCESS AUTH CODE: " . $tresponse->getAuthCode() . "\n";
                     echo " Void transaction SUCCESS TRANS ID  : " . $tresponse->getTransId() . "\n";
@@ -316,18 +365,17 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                         echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
                         echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
                     }
-                }
+                }*/
             } else {
-                $tresponse = $response->getTransactionResponse();
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $tresponse->getErrors()[0]->getErrorCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $tresponse->getErrors()[0]->getErrorText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $tresponse->getErrors()[0]->getErrorCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $tresponse->getErrors()[0]->getErrorText() . "\n"
                     );
                 } else {
                     Mage::throwException(
-                        Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                        Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                        Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                        Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                     );
                 }
             }

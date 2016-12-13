@@ -4,8 +4,6 @@ require_once(Mage::getBaseDir('lib') . DS . 'AuthorizeNetSDK' . DS . 'vendor' . 
 use net\authorize\api\contract\v1 as AnetAPI;
 use net\authorize\api\controller as AnetController;
 
-//define("AUTHORIZENET_LOG_FILE", "corevalue_acim");
-
 /**
  * http://developer.authorize.net/api/reference/index.html#customer-profiles
  *  + Create Customer Profile
@@ -31,8 +29,14 @@ use net\authorize\api\controller as AnetController;
 class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
 {
 
+    /**
+     * @var string
+     */
     protected $_mode = \net\authorize\api\constants\ANetEnvironment::SANDBOX;
 
+    /**
+     * CoreValue_Acim_Helper_CustomerProfiles constructor.
+     */
     public function __construct()
     {
         $liveMode = Mage::getStoreConfig('payment/corevalue_acim/live_mode');
@@ -41,6 +45,10 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
         }
     }
 
+    /**
+     * @param $request
+     * @return mixed
+     */
     public function initNewRequest($request)
     {
         $apiKey = Mage::getStoreConfig('payment/corevalue_acim/api_key');
@@ -68,11 +76,11 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
         $ccExpDate = intval($billingInfo['payment']['cc_exp_year']) . '-' . str_pad(intval($billingInfo['payment']['cc_exp_month']), 2, '0', STR_PAD_LEFT);
         $cvv = $billingInfo['payment']['cc_cid'];
         $creditCard = new AnetAPI\CreditCardType();
-            $creditCard->setCardNumber($ccNumber);
-            $creditCard->setExpirationDate($ccExpDate);
-            $creditCard->setCardCode($cvv);
+        $creditCard->setCardNumber($ccNumber);
+        $creditCard->setExpirationDate($ccExpDate);
+        $creditCard->setCardCode($cvv);
         $paymentCreditCard = new AnetAPI\PaymentType();
-            $paymentCreditCard->setCreditCard($creditCard);
+        $paymentCreditCard->setCreditCard($creditCard);
 
         // Create the Bill To info
         $region = '';
@@ -91,20 +99,23 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
             ->setZip($billingInfo['zip'])
             ->setCountry($billingInfo['bill']['country_id'])
             ->setPhoneNumber($billingInfo['telephone'])
-            ->setFaxNumber($billingInfo['fax']);
+            ->setFaxNumber($billingInfo['fax'])
+        ;
 
         $paymentProfile = new AnetAPI\CustomerPaymentProfileType();
-            $paymentProfile->setCustomerType('individual');
-            $paymentProfile->setBillTo($billTo);
-            $paymentProfile->setPayment($paymentCreditCard);
+        $paymentProfile->setCustomerType('individual');
+        $paymentProfile->setBillTo($billTo);
+        $paymentProfile->setPayment($paymentCreditCard);
+
         $paymentProfiles[] = $paymentProfile;
+
         $customerProfile = new AnetAPI\CustomerProfileType();
-            $customerProfile->setMerchantCustomerId($customerId);
-            $customerProfile->setEmail($customerEmail);
-            $customerProfile->setPaymentProfiles($paymentProfiles);
+        $customerProfile->setMerchantCustomerId($customerId);
+        $customerProfile->setEmail($customerEmail);
+        $customerProfile->setPaymentProfiles($paymentProfiles);
 
         $request = $this->initNewRequest(new AnetAPI\CreateCustomerProfileRequest());
-            $request->setProfile($customerProfile);
+        $request->setProfile($customerProfile);
         $controller = new AnetController\CreateCustomerProfileController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
         if (($response != null)) {
@@ -120,12 +131,12 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
         return $response;
     }
-
 
     /**
      * @param $profileId
@@ -160,17 +171,15 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
         return $response;
     }
 
-
     /**
-     * Get all existing customer profile ID's
-     * @param $profileId
-     * @return object
+     * @return AnetAPI\AnetApiResponseType
      */
     public function processGetCustomerProfileIDs()
     {
@@ -191,6 +200,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -198,10 +208,11 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Update Customer Payment Profile
      * @param $profileId
-     * @param $billingInfo
-     * @return object
+     * @param $customerId
+     * @param $email
+     * @param $description
+     * @return AnetAPI\AnetApiResponseType
      */
     public function processUpdateCustomerProfileRequest($profileId, $customerId, $email, $description)
     {
@@ -227,6 +238,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -255,6 +267,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -321,6 +334,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -362,6 +376,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -436,6 +451,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
@@ -466,18 +482,27 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
         return $response;
     }
 
+
     /**
-     * @param $profileId
-     * @param $paymentId
-     * @return object
+     * @param $transactionId
+     * @param $customerId
+     * @param $email
+     * @param string $description
+     * @return AnetAPI\AnetApiResponseType
      */
-    public function processCreateCustomerProfileFromTransactionRequest($transactionId, $customerId, $email, $description = '')
+    public function processCreateCustomerProfileFromTransactionRequest(
+        $transactionId,
+        $customerId,
+        $email,
+        $description = ''
+    )
     {
         $customerProfile = new AnetAPI\CustomerProfileBaseType();
         $customerProfile->setMerchantCustomerId($customerId)
@@ -494,16 +519,20 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
         $controller = new AnetController\CreateCustomerProfileFromTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
         if (($response != null)) {
-            if ($response->getMessages()->getResultCode() == "Ok") {
-                echo "SUCCESS: PROFILE ID : " . $response->getCustomerProfileId() . "\n";
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                Mage::log('SUCCESS: PROFILE ID: ' . $response->getCustomerProfileId(), Zend_Log::DEBUG, 'cv_acim.log');
             } else {
+                Mage::log('Error code: ' . $response->getMessages()->getMessage()[0]->getCode(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Error message: ' . $response->getMessages()->getMessage()[0]->getText(), Zend_Log::DEBUG, 'cv_acim.log');
+
                 Mage::throwException(
-                    Mage::helper('corevalue_acim')->__("CreateCustomerProfileFromTransaction ") .
-                    Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                    Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                    Mage::helper('corevalue_acim')->__('CreateCustomerProfileFromTransaction') .
+                    Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                    Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
         } else {
+            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
