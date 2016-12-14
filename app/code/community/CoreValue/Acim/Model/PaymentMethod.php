@@ -1,10 +1,4 @@
 <?php
-/**
- * User: vpetlya@corevalue.net
- * Date: 29.11.16
- * Time: 17:56
- */
-
 class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 {
     /**
@@ -16,7 +10,6 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
     const ACTION_AUTHORIZE         = 'authorize';
     const ACTION_AUTHORIZE_CAPTURE = 'authorize_capture';
-
 
     const RESPONSE_APPROVED = 1;
     const RESPONSE_DECLINED = 2;
@@ -38,7 +31,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     /**
      * @var bool
      */
-    protected $_canCapturePartial       = true;
+    protected $_canCapturePartial       = false;
     /**
      * @var bool
      */
@@ -54,7 +47,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     /**
      * @var bool
      */
-    protected $_canUseInternal          = true;
+    protected $_canUseInternal          = false;
     /**
      * @var bool
      */
@@ -79,6 +72,16 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     protected $_infoBlockType           = 'corevalue_acim/info';
 
+    // STATUSES
+    const STATUS_APPROVED               = 'Approved';
+    const STATUS_SUCCESS                = 'Complete';
+    const PAYMENT_ACTION_AUTH_CAPTURE   = 'authorize_capture';
+    const PAYMENT_ACTION_AUTH           = 'authorize';
+    const STATUS_COMPLETED              = 'Completed';
+    const STATUS_DENIED                 = 'Denied';
+    const STATUS_FAILED                 = 'Failed';
+    const STATUS_REFUNDED               = 'Refunded';
+    const STATUS_VOIDED                 = 'Voided';
 
     /**
      * Assign data to info model instance
@@ -91,9 +94,17 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         if (!($data instanceof Varien_Object)) {
             $data = new Varien_Object($data);
         }
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper                 = Mage::helper('corevalue_acim');
 
         $info = $this->getInfoInstance();
-        $info->setCcType($data->getCcType())
+
+        /* @var $customer Mage_Customer_Model_Customer */
+        $customer = $info->getQuote()->getCustomer();
+
+        // setting payment information
+        $info
+            ->setCcType($data->getCcType())
             ->setCcOwner($data->getCcOwner())
             ->setCcLast4(substr($data->getCcNumber(), -4))
             ->setCcNumber($data->getCcNumber())
@@ -105,9 +116,18 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
             ->setCcSsStartYear($data->getCcSsStartYear())
         ;
 
-        $params = Mage::app()->getRequest()->getParams();
-        if (!empty($params['payment']['payment_id']) && $params['payment']['payment_id']) {
-            $info->setAdditionalInformation('payment_id', $params['payment']['payment_id']);
+        // trying to get Customer Profile
+        $profileCustomer = $helper->getProfileModel($customer->getId(), $customer->getEmail());
+
+        if ($profileCustomer && !empty($profileId = $profileCustomer->getProfileId())) {
+            $info->setAdditionalInformation('profile_id', $profileId);
+
+            // populating payment info with payment profile id in case of selection of saved CC(tokenized)
+            $params = Mage::app()->getRequest()->getParams();
+            $paymentId = (!empty($params['payment']['payment_id']) && $params['payment']['payment_id'])
+                ? $params['payment']['payment_id']
+                : false;
+            $info->setAdditionalInformation('payment_id', $paymentId);
         }
 
         return $this;
@@ -115,30 +135,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
     /**
      * @param Varien_Object $payment
-     * @return array
-     */
-    public function getProfileAndPaymentIds(Varien_Object $payment)
-    {
-        $profileId = $payment->getAdditionalInformation('profile_id');
-        $paymentId = $payment->getAdditionalInformation('payment_id');
-
-        if (empty($profileId) || empty($paymentId)) {
-            $order = $payment->getOrder();
-            $customerId = $order->getCustomerId();
-            $email = $order->getCustomerEmail();
-            /* @var $helper CoreValue_Acim_Helper_Data */
-            $helper = Mage::helper('corevalue_acim');
-
-            $paymentProfileCollection = $helper->getPaymentCollection($customerId, $email);
-        }
-
-        return [$profileId, $paymentId];
-    }
-
-    /**
-     * @param Varien_Object $payment
      * @param float $amount
-     *
      * @return $this
      * @throws Exception
      * @throws Mage_Core_Exception
@@ -148,76 +145,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         /* @var $payment Mage_Sales_Model_Order_Payment */
         parent::authorize($payment, $amount);
 
-        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
-        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
-        /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
-        $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
-        /* @var $helper CoreValue_Acim_Helper_Data */
-        $helper                 = Mage::helper('corevalue_acim');
-        /* @var $order Mage_Sales_Model_Order */
-        $order                  = $payment->getOrder();
-
-        $isGuest = $order->getCustomerIsGuest();
-
-        if (!$isGuest) {
-            list($profileId, $paymentId) = $this->getProfileAndPaymentIds($payment);
-
-            if ($profileId) {
-                if (empty($paymentId)) {
-                    $response = $helperProfile->processCreatePaymentProfileRequest($profileId, $payment);
-                    $paymentId = $response->getCustomerPaymentProfileId();
-                }
-
-                $response = $helperTransactions->processChargeCustomerProfileRequest(
-                    $order,
-                    $profileId,
-                    $paymentId,
-                    $amount
-                );
-            } else {
-                $response = $helperTransactions->processChargeCreditCardRequest(
-                    $payment,
-                    $order,
-                    $amount
-                );
-
-                $transactionId  = $response->getTransactionResponse()->getTransId();
-                $customerId     = $order->getCustomerId();
-                $customerEmail  = $order->getCustomerEmail();
-
-                $responseProfile = $helperProfile->processCreateCustomerProfileFromTransactionRequest(
-                    $transactionId,
-                    $customerId,
-                    $customerEmail
-                );
-
-                $profileCustomer = Mage::getModel('corevalue_acim/profile_customer')
-                    ->load($responseProfile->getCustomerProfileId(), 'profile_id');
-
-                $profileCustomer
-                    ->setProfileId($responseProfile->getCustomerProfileId())
-                    ->setCustomerId($customerId)
-                    ->setEmail($customerEmail)
-                    ->save()
-                ;
-
-                foreach ($responseProfile->getCustomerPaymentProfileIdList() as $paymentId) {
-                    $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load($paymentId, 'payment_id');
-
-                    $paymentProfile
-                        ->setProfileId($responseProfile->getCustomerProfileId())
-                        ->setPaymentId($paymentId)
-                        ->setCustomerId($customerId)
-                        ->setEmail($customerEmail)
-                        ->setCcLast4($payment->getCcLast4())
-                        ->setExpirationDate($payment->getCcExpYear() . '-' . $payment->getCcExpMonth())
-                        ->save()
-                    ;
-                }
-            }
-        } else {
-            $response = $helperTransactions->processChargeCreditCardRequest($payment->getOrder(), $amount);
-        }
+        $this->initialTransaction($payment, $amount, 'authOnlyTransaction');
 
         return $this;
     }
@@ -225,19 +153,19 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     /**
      * @param Varien_Object $payment
      * @param float $amount
-     *
      * @return $this
      * @throws Mage_Core_Exception
      */
     public function capture(Varien_Object $payment, $amount)
     {
         parent::capture($payment, $amount);
+
+        return $this->initialTransaction($payment, $amount, 'authCaptureTransaction');
     }
 
     /**
      * @param Varien_Object $payment
      * @param float $amount
-     *
      * @return $this
      * @throws Mage_Core_Exception
      */
@@ -248,7 +176,6 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
     /**
      * @param Varien_Object $payment
-     *
      * @return $this
      * @throws Mage_Core_Exception
      */
@@ -264,9 +191,69 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     {
         $info = $this->getInfoInstance();
 
-        if ($info->getAdditionalInformation('payment_id')) {
+        $payment_id = $info->getAdditionalInformation('payment_id');
+
+        if ($payment_id) {
             return $this;
         }
+
         return parent::validate();
+    }
+
+    /**
+     * Method which takes care about initial transaction on order placement(main functionality).
+     * Also might be used to create new payment(auth/capture) transaction for existing order.
+     *
+     * @param Varien_Object $payment
+     * @param $amount
+     * @param $action
+     * @return $this
+     * @throws Mage_Core_Exception
+     */
+    protected function initialTransaction(Varien_Object $payment, $amount, $action)
+    {
+        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
+        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
+        /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
+        $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
+        /* @var $order Mage_Sales_Model_Order */
+        $order                  = $payment->getOrder();
+
+        if (!$order->getCustomerIsGuest()) {
+            // getting customer profile id and customer payment profile id
+            $profileId = $payment->getAdditionalInformation('profile_id');
+            $paymentId = $payment->getAdditionalInformation('payment_id');
+
+            // in case if there is valid payment profile will try to perform transaction using it
+            if (!$profileId) {
+                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest($payment);
+                $payment->setAdditionalInformation('profile_id', $profileId);
+                $payment->setAdditionalInformation('payment_id', $paymentId);
+            }
+
+            if ($profileId) {
+                if (empty($paymentId)) {
+                    $response = $helperProfile->processCreatePaymentProfileRequest($payment);
+                    $paymentId = $response->getCustomerPaymentProfileId();
+                    $payment->setAdditionalInformation('payment_id', $paymentId);
+                }
+
+                // perform payment transaction
+                $helperTransactions->processChargeCustomerProfileRequest(
+                    $payment,
+                    $profileId,
+                    $paymentId,
+                    $amount,
+                    $action
+                );
+            } else {
+                Mage::throwException('Nothing to charge, there is no valid payment information');
+            }
+        } else {
+            // perform payment transaction
+            $helperTransactions->processChargeCreditCardRequest($payment, $amount, $action);
+        }
+
+        return $this;
     }
 }

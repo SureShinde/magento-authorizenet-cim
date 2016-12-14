@@ -61,47 +61,47 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
     }
 
     /**
+     * Charge Customer's credit card
+     *
      * @param Mage_Sales_Model_Order_Payment $payment
-     * @param Mage_Sales_Model_Order $order
      * @param $amount
      * @param string $action
      * @return AnetAPI\AnetApiResponseType
      */
     public function processChargeCreditCardRequest(
         Mage_Sales_Model_Order_Payment $payment,
-        Mage_Sales_Model_Order $order,
         $amount,
         $action = 'authOnlyTransaction'
     )
     {
-        // Create the payment data for a credit card
-        $creditCard = new AnetAPI\CreditCardType();
-        $creditCard->setCardNumber($payment->getCcNumber());
-        $creditCard->setExpirationDate($payment->getCcExpMonth() . '-' . $payment->getCcExpYear());
-        $creditCard->setCardCode($payment->getCcCid());
-        $paymentOne = new AnetAPI\PaymentType();
-        $paymentOne->setCreditCard($creditCard);
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper             = Mage::helper('corevalue_acim');
+        /* @var $order Mage_Sales_Model_Order */
+        $order              = $payment->getOrder();
 
-        $items = array();
-        foreach ($order->getAllVisibleItems() as $productItem){
-            $item = new AnetAPI\LineItemType();
-            $item->setItemId($productItem->getSku())
-                ->setName($productItem->getName())
-                ->setQuantity($productItem->getQtyOrdered())
-                ->setUnitPrice($productItem->getPrice());
-            $items[] = $item;
+        /* @var $creditCard AnetAPI\CreditCardType */
+        $creditCard         = $helper->getCreditCardObject($payment);
+        /* @var $paymentOne AnetAPI\PaymentType */
+        $paymentOne         = $helper->getPaymentTypeObject($creditCard);
+        /* @var $billTo AnetAPI\CustomerAddressType */
+        $billTo             = $helper->getBillingAddressObject($payment);
+        /* @var $tOrder AnetAPI\OrderType */
+        $tOrder             = $helper->getOrderTypeObject($order);
+
+        $items = [];
+        foreach ($order->getAllVisibleItems() as $productItem) {
+            $items[] = $helper->getLineItemTypeObject($productItem);
         }
 
         // create a transaction
-        $transactionRequest = new AnetAPI\TransactionRequestType();
-        $transactionRequest->setTransactionType($action);//authCaptureTransaction
-        $transactionRequest->setAmount($amount);
-        $transactionRequest->setLineItems($items);
-        $transactionRequest->setPayment($paymentOne);
+        /* @var $transactionRequest AnetAPI\TransactionRequestType */
+        $transactionRequest = $helper->getTransactionRequestTypeObject($action, $amount, $items, $paymentOne, $billTo, $tOrder);
 
+        // preparing request
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-        $request->setTransactionRequest( $transactionRequest);
+        $request->setTransactionRequest($transactionRequest);
 
+        // executing request
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
 
@@ -109,19 +109,11 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
-               /* if ($tresponse != null && $tresponse->getMessages() != null) {
-                    echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
-                    echo "Charge Credit Card AUTH CODE : " . $tresponse->getAuthCode() . "\n";
-                    echo "Charge Credit Card TRANS ID  : " . $tresponse->getTransId() . "\n";
-                    echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
-                    echo " Description : " . $tresponse->getMessages()[0]->getDescription() . "\n";
-                } else {
-                    echo "Transaction Failed \n";
-                    if ($tresponse->getErrors() != null) {
-                        echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
-                        echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
-                    }
-                }*/
+                Mage::log('processChargeCreditCardRequest()', Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card AUTH CODE: ' . $tresponse->getAuthCode(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card TRANS ID: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+
+                return $helper->handleTransactionResponse($payment, $tresponse);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
@@ -135,15 +127,14 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                     );
                 }
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
-     * @param Mage_Sales_Model_Order $order
+     * Charge customer's payment profile
+     *
      * @param $profileId
      * @param $paymentId
      * @param $amount
@@ -151,30 +142,40 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
      * @return AnetAPI\AnetApiResponseType
      */
     public function processChargeCustomerProfileRequest(
-        Mage_Sales_Model_Order $order,
+        Mage_Sales_Model_Order_Payment $payment,
         $profileId,
         $paymentId,
         $amount,
         $action = 'authOnlyTransaction'
     )
     {
-        $paymentProfile = new AnetAPI\PaymentProfileType();
-        $paymentProfile->setPaymentProfileId($paymentId);
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper             = Mage::helper('corevalue_acim');
+        /* @var $order Mage_Sales_Model_Order */
+        $order              = $payment->getOrder();
 
-        $profileToCharge = new AnetAPI\CustomerProfilePaymentType();
-        $profileToCharge->setCustomerProfileId($profileId);
-        $profileToCharge->setPaymentProfile($paymentProfile);
+        /* @var $paymentProfile AnetAPI\PaymentProfileType */
+        $paymentProfile     = $helper->getPaymentProfileTypeObject($paymentId);
+        /* @var $profileToCharge AnetAPI\CustomerProfilePaymentType */
+        $profileToCharge    = $helper->getCustomerProfilePaymentTypeObject($profileId, $paymentProfile);
+        /* @var $billTo AnetAPI\CustomerAddressType */
+        $billTo             = $helper->getBillingAddressObject($payment);
+        /* @var $tOrder AnetAPI\OrderType */
+        $tOrder             = $helper->getOrderTypeObject($order);
 
+        $items = [];
+        foreach ($order->getAllVisibleItems() as $productItem) {
+            $items[] = $helper->getLineItemTypeObject($productItem);
+        }
 
-        $transactionRequest = new AnetAPI\TransactionRequestType();
-        $transactionRequest->setTransactionType($action);//authCaptureTransaction
-        $transactionRequest->setAmount($amount);
-        $transactionRequest->setProfile($profileToCharge);
+        /* @var $transactionRequest AnetAPI\TransactionRequestType */
+        $transactionRequest = $helper->getTransactionRequestTypeObject($action, $amount, $items, $profileToCharge, $billTo, $tOrder);
 
+        // preparing request
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
-
         $request->setTransactionRequest($transactionRequest);
 
+        // executing request
         $controller = new AnetController\CreateTransactionController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
 
@@ -182,20 +183,11 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
-                /*if ($tresponse != null && $tresponse->getMessages() != null) {
-                    echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
-                    echo "Charge Customer Profile APPROVED  :" . "\n";
-                    echo " Charge Customer Profile AUTH CODE : " . $tresponse->getAuthCode() . "\n";
-                    echo " Charge Customer Profile TRANS ID  : " . $tresponse->getTransId() . "\n";
-                    echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
-                    echo " Description : " . $tresponse->getMessages()[0]->getDescription() . "\n";
-                } else {
-                    echo "Transaction Failed \n";
-                    if ($tresponse->getErrors() != null) {
-                        echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
-                        echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
-                    }
-                }*/
+                Mage::log('processChargeCustomerProfileRequest()', Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card AUTH CODE: ' . $tresponse->getAuthCode(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card TRANS ID: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+
+                return $helper->handleTransactionResponse($payment, $tresponse);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
@@ -209,11 +201,9 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                     );
                 }
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**

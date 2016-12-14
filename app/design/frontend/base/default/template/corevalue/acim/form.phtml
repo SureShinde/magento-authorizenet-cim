@@ -11,7 +11,7 @@ if (Mage::getSingleton('customer/session')->isLoggedIn()) {
 
     <?php if(isset($paymentProfiles) && $paymentProfiles->count()) :?>
     <div>
-        <input type="radio" name="p_option" onclick="showSelect()" id="payment_form_<?php echo $_code ?>_select_label" value="0" selected />
+        <input type="radio" name="p_option" onclick="showSelect()" id="payment_form_<?php echo $_code ?>_select_label" value="0" checked />
         <label for="payment_form_<?php echo $_code ?>_select_label" class="required"><?php echo $this->__('Select Credit Card') ?></label>
     </div>
 
