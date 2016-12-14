@@ -31,7 +31,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     /**
      * @var bool
      */
-    protected $_canCapturePartial       = false;
+    protected $_canCapturePartial       = true;
     /**
      * @var bool
      */
@@ -94,13 +94,13 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         if (!($data instanceof Varien_Object)) {
             $data = new Varien_Object($data);
         }
+
         /* @var $helper CoreValue_Acim_Helper_Data */
         $helper                 = Mage::helper('corevalue_acim');
-
-        $info = $this->getInfoInstance();
-
+        /* @var $info Mage_Payment_Model_Info */
+        $info                   = $this->getInfoInstance();
         /* @var $customer Mage_Customer_Model_Customer */
-        $customer = $info->getQuote()->getCustomer();
+        $customer               = $info->getQuote()->getCustomer();
 
         // setting payment information
         $info
@@ -142,7 +142,6 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function authorize(Varien_Object $payment, $amount)
     {
-        /* @var $payment Mage_Sales_Model_Order_Payment */
         parent::authorize($payment, $amount);
 
         $this->initialTransaction($payment, $amount, 'authOnlyTransaction');
@@ -158,7 +157,21 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function capture(Varien_Object $payment, $amount)
     {
+        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
+        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
+
         parent::capture($payment, $amount);
+
+        // ToDO: fix capturing rest of authorized amount after previous capture.
+        // For some reason after first capture $payment->getAuthorizationTransaction() stopping getting auth transaction
+        if (
+            $payment->getAuthorizationTransaction()
+            && $payment->getAuthorizationTransaction()->getTxnId()
+            && $amount <= $payment->getBaseAmountAuthorized() - $payment->getBaseAmountPaid()
+        ) {
+            $helperTransactions->processCaptureAuthorizedAmountRequest($payment, $amount);
+            return $this;
+        }
 
         return $this->initialTransaction($payment, $amount, 'authCaptureTransaction');
     }

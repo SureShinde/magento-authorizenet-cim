@@ -207,15 +207,20 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
     }
 
     /**
-     * @param $transactionId
+     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param $amount
      * @return AnetAPI\AnetApiResponseType
      */
-    public function processCaptureAuthorizedAmountRequest($transactionId)
+    public function processCaptureAuthorizedAmountRequest(Mage_Sales_Model_Order_Payment $payment, $amount)
     {
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper             = Mage::helper('corevalue_acim');
+
         // Now capture the previously authorized  amount
         $transactionRequest = new AnetAPI\TransactionRequestType();
         $transactionRequest->setTransactionType('priorAuthCaptureTransaction');
-        $transactionRequest->setRefTransId($transactionId);
+        $transactionRequest->setAmount($amount);
+        $transactionRequest->setRefTransId($payment->getAuthorizationTransaction()->getTxnId());
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
         $request->setTransactionRequest($transactionRequest);
@@ -227,19 +232,7 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
-                /*if ($tresponse != null && $tresponse->getMessages() != null) {
-                    echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
-                    echo "Successful." . "\n";
-                    echo "Capture Previously Authorized Amount, Trans ID : " . $tresponse->getRefTransId() . "\n";
-                    echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
-                    echo " Description : " . $tresponse->getMessages()[0]->getDescription() . "\n";
-                } else {
-                    echo "Transaction Failed \n";
-                    if ($tresponse->getErrors() != null) {
-                        echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
-                        echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
-                    }
-                }*/
+                return $helper->updatePayment($payment, $tresponse);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
