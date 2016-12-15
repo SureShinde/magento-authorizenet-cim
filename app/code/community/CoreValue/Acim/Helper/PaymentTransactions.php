@@ -209,7 +209,7 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
     /**
      * @param Mage_Sales_Model_Order_Payment $payment
      * @param $amount
-     * @return AnetAPI\AnetApiResponseType
+     * @return mixed|AnetAPI\AnetApiResponseType
      */
     public function processCaptureAuthorizedAmountRequest(Mage_Sales_Model_Order_Payment $payment, $amount)
     {
@@ -260,8 +260,8 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
     /**
      * @param $transactionId
      * @param $amount
-     * @param $last4
-     * @return AnetAPI\AnetApiResponseType
+     * @param Varien_Object $payment
+     * @return Varien_Object
      */
     public function processRefundTransactionRequest($transactionId, $amount, Varien_Object $payment)
     {
@@ -338,7 +338,7 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
 
     /**
      * @param $transactionId
-     * @return AnetAPI\AnetApiResponseType
+     * @return Varien_Object
      */
     public function processVoidTransactionRequest($transactionId)
     {
