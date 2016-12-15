@@ -157,10 +157,10 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function capture(Varien_Object $payment, $amount)
     {
+        parent::capture($payment, $amount);
+
         /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
         $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
-
-        parent::capture($payment, $amount);
 
         // checking if this capture request might be performed using initial auth request
         if (
@@ -186,7 +186,38 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function refund(Varien_Object $payment, $amount)
     {
-        return parent::refund($payment, $amount);
+        parent::refund($payment, $amount);
+
+        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
+        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
+
+        $transaction = $payment->getTransactionForVoid();
+
+        if (empty($transaction)) {
+            $transaction = Mage::getModel('sales/order_payment_transaction')
+                ->setOrderPaymentObject($payment)
+                ->loadByTxnId($payment->getLastTransId());
+        }
+
+        if ($transaction->getTxnId()) {
+            $result = $helperTransactions->processRefundTransactionRequest($transaction->getTxnId(), $amount, $payment);
+
+            $payment
+                ->setCcApproval($result->getResultCode())
+                ->setTransactionId($result->getTransId())
+                ->setCcTransId($result->getTransId())
+                ->setCcAvsStatus($result->getResultCode())
+                ->setCcCidStatus($result->getResultCode())
+                ->setStatus(self::STATUS_VOIDED)
+                ->setIsTransactionClosed();
+
+            $transaction
+                ->setTxnType(Mage_Sales_Model_Order_Payment_Transaction::TYPE_VOID)
+                ->setIsClosed(true)
+                ->save();
+        }
+
+        return $this;
     }
 
     /**
@@ -210,14 +241,14 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         }
 
         if ($transaction->getTxnId()) {
-            $response = $helperTransactions->processVoidTransactionRequest($transaction->getTxnId());
+            $result = $helperTransactions->processVoidTransactionRequest($transaction->getTxnId());
 
             $payment
-                ->setCcApproval($response->getAuthCode())
-                ->setTransactionId($response->getTransId())
-                ->setCcTransId($response->getTransId())
-                ->setCcAvsStatus($response->getAuthCode())
-                ->setCcCidStatus($response->getAuthCode())
+                ->setCcApproval($result->getAuthCode())
+                ->setTransactionId($result->getTransId())
+                ->setCcTransId($result->getTransId())
+                ->setCcAvsStatus($result->getAuthCode())
+                ->setCcCidStatus($result->getAuthCode())
                 ->setStatus(self::STATUS_VOIDED)
                 ->setIsTransactionClosed();
 

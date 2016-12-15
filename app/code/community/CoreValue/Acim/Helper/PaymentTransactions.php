@@ -263,20 +263,42 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
      * @param $last4
      * @return AnetAPI\AnetApiResponseType
      */
-    public function processRefundTransactionRequest($transactionId, $amount, $last4)
+    public function processRefundTransactionRequest($transactionId, $amount, Varien_Object $payment)
     {
-        // Create the payment data for a credit card
-        $creditCard = new AnetAPI\CreditCardType();
-        $creditCard->setCardNumber($last4);
-        $paymentOne = new AnetAPI\PaymentType();
-        $paymentOne->setCreditCard($creditCard);
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper             = Mage::helper('corevalue_acim');
 
-        //create a transaction
+        if (!empty($payment->getCcLast4())) {
+            $creditCard = new AnetAPI\CreditCardType();
+            $creditCard->setCardNumber($payment->getCcLast4());
+            $creditCard->setExpirationDate(
+                $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT)
+            );
+
+            $paymentCreditCard = new AnetAPI\PaymentType();
+            $paymentCreditCard->setCreditCard($creditCard);
+        } else {
+            // getting customer profile id and customer payment profile id
+            $profileId = $payment->getAdditionalInformation('profile_id');
+            $paymentId = $payment->getAdditionalInformation('payment_id');
+
+            /* @var $paymentProfile AnetAPI\PaymentProfileType */
+            $paymentProfile     = $helper->getPaymentProfileTypeObject($paymentId);
+            /* @var $profileToCharge AnetAPI\CustomerProfilePaymentType */
+            $profileToCharge    = $helper->getCustomerProfilePaymentTypeObject($profileId, $paymentProfile);
+        }
+
+        // create a transaction
         $transactionRequest = new AnetAPI\TransactionRequestType();
         $transactionRequest->setTransactionType('refundTransaction');
         $transactionRequest->setRefTransId($transactionId);
         $transactionRequest->setAmount($amount);
-        $transactionRequest->setPayment($paymentOne);
+
+        if (!empty($payment->getCcLast4())) {
+            $transactionRequest->setPayment($paymentCreditCard);
+        } else {
+            $transactionRequest->setProfile($profileToCharge);
+        }
 
         $request = $this->initNewRequest(new AnetAPI\CreateTransactionRequest());
         $request->setTransactionRequest($transactionRequest);
@@ -288,18 +310,14 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
-                /*if ($tresponse != null && $tresponse->getMessages() != null) {
-                    echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
-                    echo "Refund SUCCESS: " . $tresponse->getTransId() . "\n";
-                    echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
-                    echo " Description : " . $tresponse->getMessages()[0]->getDescription() . "\n";
-                } else {
-                    echo "Transaction Failed \n";
-                    if ($tresponse->getErrors() != null) {
-                        echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
-                        echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
-                    }
-                }*/
+                Mage::log('processVoidTransactionRequest()', Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card AUTH CODE: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card TRANS ID: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+
+                return new Varien_Object([
+                    'trans_id' => $tresponse->getTransId(),
+                    'result_code' => $tresponse->getResponseCode()
+                ]);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
@@ -313,11 +331,9 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                     );
                 }
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
