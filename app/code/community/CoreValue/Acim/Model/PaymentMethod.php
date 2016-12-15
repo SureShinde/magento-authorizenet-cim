@@ -162,17 +162,19 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
         parent::capture($payment, $amount);
 
-        // ToDO: fix capturing rest of authorized amount after previous capture.
-        // For some reason after first capture $payment->getAuthorizationTransaction() stopping getting auth transaction
+        // checking if this capture request might be performed using initial auth request
         if (
             $payment->getAuthorizationTransaction()
-            && $payment->getAuthorizationTransaction()->getTxnId()
-            && $amount <= $payment->getBaseAmountAuthorized() - $payment->getBaseAmountPaid()
+            && $amount <= ($payment->getBaseAmountAuthorized() - $payment->getBaseAmountPaid())
         ) {
+            // trying to capture existing auth transaction for requested amount
+            // once this transaction will be captured system will need to create new auth && capture transaction
+            // in case of partial payment even if we have captured only part of authorized amount
             $helperTransactions->processCaptureAuthorizedAmountRequest($payment, $amount);
             return $this;
         }
 
+        // otherwise trying to create new auth && capture transaction
         return $this->initialTransaction($payment, $amount, 'authCaptureTransaction');
     }
 
@@ -194,7 +196,38 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function void(Varien_Object $payment)
     {
-        return parent::void($payment);
+        parent::void($payment);
+
+        /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
+        $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
+
+        $transaction            = $payment->getTransactionForVoid();
+
+        if (empty($transaction)) {
+            $transaction = Mage::getModel('sales/order_payment_transaction')
+                ->setOrderPaymentObject($payment)
+                ->loadByTxnId($payment->getLastTransId());
+        }
+
+        if ($transaction->getTxnId()) {
+            $response = $helperTransactions->processVoidTransactionRequest($transaction->getTxnId());
+
+            $payment
+                ->setCcApproval($response->getAuthCode())
+                ->setTransactionId($response->getTransId())
+                ->setCcTransId($response->getTransId())
+                ->setCcAvsStatus($response->getAuthCode())
+                ->setCcCidStatus($response->getAuthCode())
+                ->setStatus(self::STATUS_VOIDED)
+                ->setIsTransactionClosed();
+
+            $transaction
+                ->setTxnType(Mage_Sales_Model_Order_Payment_Transaction::TYPE_VOID)
+                ->setIsClosed(true)
+                ->save();
+        }
+
+        return $this;
     }
 
     /**

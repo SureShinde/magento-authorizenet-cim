@@ -232,6 +232,10 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
+                Mage::log('processCaptureAuthorizedAmountRequest()', Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card AUTH CODE: ' . $tresponse->getAuthCode(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card TRANS ID: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+
                 return $helper->updatePayment($payment, $tresponse);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
@@ -336,19 +340,14 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $tresponse = $response->getTransactionResponse();
 
             if ($response->getMessages()->getResultCode() == 'Ok') {
-                /*if ($tresponse != null && $tresponse->getMessages() != null) {
-                    echo " Transaction Response code : " . $tresponse->getResponseCode() . "\n";
-                    echo " Void transaction SUCCESS AUTH CODE: " . $tresponse->getAuthCode() . "\n";
-                    echo " Void transaction SUCCESS TRANS ID  : " . $tresponse->getTransId() . "\n";
-                    echo " Code : " . $tresponse->getMessages()[0]->getCode() . "\n";
-                    echo " Description : " . $tresponse->getMessages()[0]->getDescription() . "\n";
-                } else {
-                    echo "Transaction Failed \n";
-                    if ($tresponse->getErrors() != null) {
-                        echo " Error code  : " . $tresponse->getErrors()[0]->getErrorCode() . "\n";
-                        echo " Error message : " . $tresponse->getErrors()[0]->getErrorText() . "\n";
-                    }
-                }*/
+                Mage::log('processVoidTransactionRequest()', Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card AUTH CODE: ' . $tresponse->getAuthCode(), Zend_Log::DEBUG, 'cv_acim.log');
+                Mage::log('Charge Credit Card TRANS ID: ' . $tresponse->getTransId(), Zend_Log::DEBUG, 'cv_acim.log');
+
+                return new Varien_Object([
+                    'auth_code' => $tresponse->getAuthCode(),
+                    'trans_id'  => $tresponse->getTransId(),
+                ]);
             } else {
                 if ($tresponse != null && $tresponse->getErrors() != null) {
                     Mage::throwException(
@@ -362,11 +361,9 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
                     );
                 }
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
 }
