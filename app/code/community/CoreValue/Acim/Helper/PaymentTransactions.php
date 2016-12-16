@@ -268,7 +268,11 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         /* @var $helper CoreValue_Acim_Helper_Data */
         $helper             = Mage::helper('corevalue_acim');
 
-        if (!empty($payment->getCcLast4())) {
+        // getting customer profile id and customer payment profile id
+        $profileId          = $payment->getAdditionalInformation('profile_id');
+        $paymentId          = $payment->getAdditionalInformation('payment_id');
+
+        if (!$profileId && !$paymentId) {
             $creditCard = new AnetAPI\CreditCardType();
             $creditCard->setCardNumber($payment->getCcLast4());
             $creditCard->setExpirationDate(
@@ -278,10 +282,6 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
             $paymentCreditCard = new AnetAPI\PaymentType();
             $paymentCreditCard->setCreditCard($creditCard);
         } else {
-            // getting customer profile id and customer payment profile id
-            $profileId = $payment->getAdditionalInformation('profile_id');
-            $paymentId = $payment->getAdditionalInformation('payment_id');
-
             /* @var $paymentProfile AnetAPI\PaymentProfileType */
             $paymentProfile     = $helper->getPaymentProfileTypeObject($paymentId);
             /* @var $profileToCharge AnetAPI\CustomerProfilePaymentType */
@@ -294,7 +294,7 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         $transactionRequest->setRefTransId($transactionId);
         $transactionRequest->setAmount($amount);
 
-        if (!empty($payment->getCcLast4())) {
+        if (!$profileId && !$paymentId) {
             $transactionRequest->setPayment($paymentCreditCard);
         } else {
             $transactionRequest->setProfile($profileToCharge);

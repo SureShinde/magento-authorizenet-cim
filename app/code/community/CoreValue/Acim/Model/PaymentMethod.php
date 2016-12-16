@@ -129,10 +129,19 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                 : false;
             $info->setAdditionalInformation('payment_id', $paymentId);
 
-            // checking if there is such payment profile, payment profile should belongs to exactly this user
-            $paymentModel = $helper->getPaymentModel($profileId, $paymentId);
-            if (!$paymentModel && !$paymentModel->getId()) {
-                Mage::throwException($helper->__('Could not find requested payment profile'));
+            if ($paymentId) {
+                // checking if there is such payment profile, payment profile should belongs to exactly this user
+                $paymentModel = $helper->getPaymentModel($profileId, $paymentId);
+                if (!$paymentModel && !$paymentModel->getId()) {
+                    Mage::throwException($helper->__('Could not find requested payment profile'));
+                } else {
+                    list($expYear, $expMonth) = explode('-', $paymentModel->getExpirationDate());
+                    $info
+                        ->setCcLast4($paymentModel->getCcLast4())
+                        ->setCcExpMonth($expMonth)
+                        ->setCcExpYear($expYear)
+                    ;
+                }
             }
         }
 
