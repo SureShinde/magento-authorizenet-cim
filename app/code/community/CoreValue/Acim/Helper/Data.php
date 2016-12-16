@@ -217,7 +217,8 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ->setCustomerId($payment->getOrder()->getCustomer()->getId())
             ->setEmail($payment->getOrder()->getCustomer()->getEmail())
             ->setCcLast4($payment->getCcLast4())
-            ->setExpirationDate($payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT))
+            ->setCcType($payment->getCcType())
+            ->setExpirationDate($this->formatExpDate($payment))
             ->save()
         ;
 
@@ -344,5 +345,16 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ->setCcTransId($response->getTransId());
 
         return $response;
+    }
+
+    /**
+     * Formatting CC Expiration date with first zero if needed, but actual number will never be longer than 2 chars.
+     *
+     * @param Mage_Sales_Model_Order_Payment $payment
+     * @return string
+     */
+    public function formatExpDate(Mage_Sales_Model_Order_Payment $payment)
+    {
+        return $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT);
     }
 }

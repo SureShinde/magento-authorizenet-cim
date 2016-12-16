@@ -138,6 +138,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                     list($expYear, $expMonth) = explode('-', $paymentModel->getExpirationDate());
                     $info
                         ->setCcLast4($paymentModel->getCcLast4())
+                        ->setCcType($paymentModel->getCcType())
                         ->setCcExpMonth($expMonth)
                         ->setCcExpYear($expYear)
                     ;
@@ -339,7 +340,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                     $action
                 );
             } else {
-                Mage::throwException('Nothing to charge, there is no valid payment information');
+                Mage::throwException($helperTransactions->__('Nothing to charge, there is no valid payment information'));
             }
         } else {
             // perform payment transaction

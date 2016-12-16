@@ -275,9 +275,7 @@ class CoreValue_Acim_Helper_PaymentTransactions extends Mage_Core_Helper_Abstrac
         if (!$profileId && !$paymentId) {
             $creditCard = new AnetAPI\CreditCardType();
             $creditCard->setCardNumber($payment->getCcLast4());
-            $creditCard->setExpirationDate(
-                $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT)
-            );
+            $creditCard->setExpirationDate($helper->formatExpDate($payment));
 
             $paymentCreditCard = new AnetAPI\PaymentType();
             $paymentCreditCard->setCreditCard($creditCard);
