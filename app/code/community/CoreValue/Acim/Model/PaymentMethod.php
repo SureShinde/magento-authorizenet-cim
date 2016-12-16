@@ -128,6 +128,12 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                 ? $params['payment']['payment_id']
                 : false;
             $info->setAdditionalInformation('payment_id', $paymentId);
+
+            // checking if there is such payment profile, payment profile should belongs to exactly this user
+            $paymentModel = $helper->getPaymentModel($profileId, $paymentId);
+            if (!$paymentModel && !$paymentModel->getId()) {
+                Mage::throwException($helper->__('Could not find requested payment profile'));
+            }
         }
 
         return $this;
