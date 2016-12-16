@@ -55,6 +55,16 @@
                 </corevalue_acim>
             </updates>
         </layout>
+
+        <routers>
+            <acimprofiles>
+                <use>standard</use>
+                <args>
+                    <module>CoreValue_Acim</module>
+                    <frontName>acim-profiles</frontName>
+                </args>
+            </acimprofiles>
+        </routers>
     </frontend>
 
     <default>

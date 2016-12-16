@@ -331,33 +331,36 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
 
         $controller = new AnetController\GetCustomerPaymentProfileController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
-        if (($response != null)) {
-            if ($response->getMessages()->getResultCode() == "Ok") {
-                echo "GetCustomerPaymentProfile SUCCESS: " . "\n";
-                echo "Customer Payment Profile Id: " . $response->getPaymentProfile()->getCustomerPaymentProfileId() . "\n";
-                echo "Customer Payment Profile Billing Address: " . $response->getPaymentProfile()->getbillTo()->getAddress() . "\n";
-                echo "Customer Payment Profile Card Last 4 " . $response->getPaymentProfile()->getPayment()->getCreditCard()->getCardNumber() . "\n";
 
-                if ($response->getPaymentProfile()->getSubscriptionIds() != null) {
-                    if ($response->getPaymentProfile()->getSubscriptionIds() != null) {
-                        echo "List of subscriptions:";
-                        foreach ($response->getPaymentProfile()->getSubscriptionIds() as $subscriptionid)
-                            echo $subscriptionid . "\n";
-                    }
-                }
+        if (($response != null)) {
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                return new Varien_Object([
+                    'credit_card'   => new Varien_Object([
+                        'number'        => $response->getPaymentProfile()->getPayment()->getCreditCard()->getCardNumber(),
+                        'exp_date'      => $response->getPaymentProfile()->getPayment()->getCreditCard()->getExpirationDate(),
+                        'type'          => $response->getPaymentProfile()->getPayment()->getCreditCard()->getCardType(),
+                    ]),
+                    'bill_to'       => new Varien_Object([
+                        'first_name'    => $response->getPaymentProfile()->getbillTo()->getFirstName(),
+                        'last_name'     => $response->getPaymentProfile()->getbillTo()->getLastName(),
+                        'company'       => $response->getPaymentProfile()->getbillTo()->getCompany(),
+                        'address'       => $response->getPaymentProfile()->getbillTo()->getAddress(),
+                        'city'          => $response->getPaymentProfile()->getbillTo()->getCity(),
+                        'state'         => $response->getPaymentProfile()->getbillTo()->getState(),
+                        'zip'           => $response->getPaymentProfile()->getbillTo()->getZip(),
+                        'country'       => $response->getPaymentProfile()->getbillTo()->getCountry(),
+                    ]),
+                ]);
             } else {
                 Mage::throwException(
-                    Mage::helper('corevalue_acim')->__("GetCustomerPaymentProfile ") .
-                    Mage::helper('corevalue_acim')->__(" Error code: ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                    Mage::helper('corevalue_acim')->__(" Error message: ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                    Mage::helper('corevalue_acim')->__('processGetCustomerPaymentProfileRequest()') .
+                    Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                    Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
@@ -451,20 +454,17 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
 
         if (($response != null)) {
             if ($response->getMessages()->getResultCode() == 'Ok') {
-                echo "SUCCESS: Delete Customer Payment Profile  SUCCESS:" . "\n";
+                return true;
             } else {
                 Mage::throwException(
-                    Mage::helper('corevalue_acim')->__('DeletePaymentProfile') .
+                    Mage::helper('corevalue_acim')->__('processDeletePaymentProfileRequest()') .
                     Mage::helper('corevalue_acim')->__('Error code:') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
                     Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**

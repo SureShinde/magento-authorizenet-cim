@@ -1,6 +1,6 @@
 <?php
 
-class CoreValue_Acim_Block_Info extends Mage_Payment_Block_Info_Cc
+class CoreValue_Acim_Block_Checkout_Info extends Mage_Payment_Block_Info_Cc
 {
     /**
      * Checkout progress information block flag

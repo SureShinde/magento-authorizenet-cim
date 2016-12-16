@@ -76,12 +76,12 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      * Block that will be used for enter cc data
      * @var string
      */
-    protected $_formBlockType           = 'corevalue_acim/form';
+    protected $_formBlockType           = 'corevalue_acim/checkout_form';
     /**
      * Block that will be used for show cc data
      * @var string
      */
-    protected $_infoBlockType           = 'corevalue_acim/info';
+    protected $_infoBlockType           = 'corevalue_acim/checkout_info';
 
     // STATUSES
     const STATUS_APPROVED               = 'Approved';

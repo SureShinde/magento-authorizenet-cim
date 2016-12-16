@@ -1,0 +1,44 @@
+<?php $profiles = $this->getProfiles(); ?>
+
+<div class="page-title">
+    <h1><?php echo $this->__('My Credit Cards') ?></h1>
+</div>
+
+<div class="page-title">
+    <a href="<?php echo $this->getUrl('acimprofiles/index/add') ?>"><?php echo $this->__('Add Credit Card') ?></a>&nbsp;
+</div>
+
+<?php if ($profiles->getSize()): ?>
+    <table class="data-table" id="my-cards-table" >
+        <thead>
+            <tr>
+                <th><?php echo $this->__('Credit Card Number') ?></th>
+                <th><?php echo $this->__('Type') ?></th>
+                <th><?php echo $this->__('Exp. Date') ?></th>
+                <th><?php echo $this->__('Actions') ?></th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($profiles as $profile): ?>
+            <tr>
+                <td>XXXX-XXXX-XXXX-<?php echo $profile->getCcLast4() ?>&nbsp;</td>
+                <td><?php echo $profile->getCcType() ? $profile->getCcType() : '-'; ?>&nbsp;</td>
+                <td><?php echo $profile->getExpirationDate() ?></td>
+                <td>
+                    <a href="<?php echo $this->getUrl('acimprofiles/index/edit', ['id' => $profile->getId()]) ?>"><?php echo $this->__('Details') ?></a>
+                    <a onclick="return confirm('<?php echo $this->__('Are you sure?') ?>');" href="<?php echo $this->getUrl('acimprofiles/index/delete', ['id' => $profile->getId()]) ?>"><?php echo $this->__('Delete') ?></a>
+                </td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+    <script type="text/javascript">
+        decorateTable('my-cards-table');
+    </script>
+<?php else: ?>
+    <p><?php echo $this->__('You have not credit cards yet') ?></p>
+<?php endif ?>
+
+<div class="buttons-set">
+    <p class="back-link"><a href="<?php echo $this->getUrl('customer/account') ?>"><small>&laquo; </small><?php echo $this->__('Back') ?></a></p>
+</div>

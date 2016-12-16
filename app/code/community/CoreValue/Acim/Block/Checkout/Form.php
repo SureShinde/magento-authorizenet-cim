@@ -3,7 +3,7 @@
 /**
  * Payment method form base block
  */
-class CoreValue_Acim_Block_Form extends Mage_Payment_Block_Form
+class CoreValue_Acim_Block_Checkout_Form extends Mage_Payment_Block_Form
 {
     /**
      * Set block template

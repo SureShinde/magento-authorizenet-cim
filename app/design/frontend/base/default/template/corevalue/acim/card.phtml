@@ -1,0 +1,67 @@
+<?php
+/* @var $paymentProfile CoreValue_Acim_Model_Profile_Payment */
+/* @var $this CoreValue_Acim_Block_Card */
+$paymentProfile         = $this->getPaymentProfile();
+/* @var $acimEntity Varien_Object */
+$acimEntity             = $this->retrievePaymentProfile();
+?>
+<div class="page-title">
+    <h1><?php echo $this->__('Details for') ?> XXXX-XXXX-XXXX-<?php echo $paymentProfile->getCcLast4(); ?></h1>
+</div>
+
+<table class="data-table" id="my-card-table" >
+    <tbody>
+        <tr>
+            <td><?php echo $this->__('Credit Card Expiration Date'); ?></td>
+            <td><?php echo $paymentProfile->getExpirationDate(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Credit Card Type'); ?></td>
+            <td><?php echo $acimEntity->getCreditCard()->getType(); ?></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('First Name'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getFirstName(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Last Name'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getLastName(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Company'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getCompany(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Address'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getAddress(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('City'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getCity(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('State'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getState(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Zip'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getZip(); ?></td>
+        </tr>
+        <tr>
+            <td><?php echo $this->__('Country'); ?></td>
+            <td><?php echo $acimEntity->getBillTo()->getCountry(); ?></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="buttons-set">
+    <p class="back-link"><a href="<?php echo $this->getUrl('acimprofiles') ?>"><small>&laquo; </small><?php echo $this->__('Back') ?></a></p>
+</div>
+
+<script type="text/javascript">
+    decorateTable('my-card-table');
+</script>
