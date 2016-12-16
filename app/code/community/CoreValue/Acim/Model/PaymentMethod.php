@@ -17,49 +17,60 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     const RESPONSE_HELD_FOR_REVIEW = 4;
 
     /**
+     * Defines if this Payment Method uses external payment gateway
      * @var bool
      */
     protected $_isGateway               = true;
     /**
+     * Defines if this Payment Method can perform payment authorization
      * @var bool
      */
     protected $_canAuthorize            = true;
     /**
+     * Defines if this Payment Method can perform payment capturing
      * @var bool
      */
     protected $_canCapture              = true;
     /**
+     * Defines if this Payment Method can perform payment partial capturing
      * @var bool
      */
     protected $_canCapturePartial       = true;
     /**
+     * Defines if this Payment Method can perform refunds
      * @var bool
      */
     protected $_canRefund               = true;
     /**
+     * Defines if this Payment Method can perform partial refunds
      * @var bool
      */
     protected $_canRefundInvoicePartial = true;
     /**
+     * Defines if this Payment Method can perform payment voiding
      * @var bool
      */
     protected $_canVoid                 = true;
     /**
+     * Defines if this Payment Method can be used in admin interface for order creation
      * @var bool
      */
-    protected $_canUseInternal          = false;
+    protected $_canUseInternal          = true;
     /**
+     * Defines if this Payment Method can be used for checkout proccess
      * @var bool
      */
     protected $_canUseCheckout          = true;
     /**
+     * Defines if this Payment Method can be used for multishipping
      * @var bool
      */
     protected $_canUseForMultishipping  = true;
     /**
+     * Defines if this Payment Method can store CC in DB in encrypted way
      * @var bool
      */
-    protected $_canSaveCc = false;
+    protected $_canSaveCc               = false;
 
     /**
      * Block that will be used for enter cc data

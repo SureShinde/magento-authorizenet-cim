@@ -64,12 +64,16 @@ class CoreValue_Acim_Block_Form extends Mage_Payment_Block_Form
     /**
      * @return mixed
      */
-    public function getPaymentProfiles()
+    public function getPaymentProfiles($customerId = null, $customerEmail = null)
     {
-        return Mage::helper('corevalue_acim')->getPaymentCollection(
-            Mage::getSingleton('customer/session')->getCustomer()->getId(),
-            trim(Mage::getSingleton('customer/session')->getCustomer()->getEmail())
-        );
+        if (!$customerId || !$customerEmail) {
+            return Mage::helper('corevalue_acim')->getPaymentCollection(
+                Mage::getSingleton('customer/session')->getCustomer()->getId(),
+                trim(Mage::getSingleton('customer/session')->getCustomer()->getEmail())
+            );
+        }
+
+        return Mage::helper('corevalue_acim')->getPaymentCollection($customerId, $customerEmail);
     }
 
     /**
