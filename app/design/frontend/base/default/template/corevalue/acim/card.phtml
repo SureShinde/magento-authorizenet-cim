@@ -9,7 +9,9 @@ $acimEntity             = $this->retrievePaymentProfile();
     <h2 class="legend"><?php echo $this->__('Details for') ?> XXXX-XXXX-XXXX-<?php echo $paymentProfile->getCcLast4(); ?></h2>
 </div>
 
-<em><b>*<?php echo $this->__('Keep fields without changes if you do not want to modify them.'); ?></b></em>
+<?php if ($paymentProfile->getId()) : ?>
+<em><?php echo $this->__('Keep XXXX in case if you do not want to modify CC number, CVV/CID or Expiration Date.'); ?></em>
+<?php endif; ?>
 
 <form method="post" name="add-edit-cc-form" id="add-edit-cc-form" action="<?php echo $this->getUrl('acimprofiles/index/update', ['id' => $paymentProfile->getId()]) ?>">
     <?php echo $this->getBlockHtml('formkey')?>
@@ -27,19 +29,34 @@ $acimEntity             = $this->retrievePaymentProfile();
             </div>
         </li>
         <li>
-            <label><?php echo $this->__('Credit Card Type'); ?>: <?php echo $acimEntity->getCreditCard()->getType(); ?></label>
+            <label for="cvv" class="required"><em>*</em><?php echo $this->__('CVV/CID'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="cvv" id="cvv" value="<?php echo $paymentProfile->getId() ? 'XXXX' : ''; ?>" class="input-text required-entry" />
+            </div>
+        </li>
+        <li>
+            <label for="cc_type"><?php echo $this->__('Credit Card Type'); ?>: <?php echo $acimEntity->getCreditCard()->getType(); ?></label>
+            <div class="input-box">
+                <select id="cc_type" name="cc_type" class="required-entry">
+                    <option value=""><?php echo $this->__('--Please Select--')?></option>
+                    <?php $_ccType = $this->getInfoData('cc_type') ?>
+                    <?php foreach ($this->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
+                        <option value="<?php echo $_typeCode ?>"<?php if (str_replace(' ', '', $_typeName) == $acimEntity->getCreditCard()->getType()): ?> selected<?php endif; ?>><?php echo $_typeName ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
         </li>
         <li>&nbsp;<b><?php echo $this->__('Billing Address'); ?></b></li>
         <li>
             <label for="first_name" class="required"><em>*</em><?php echo $this->__('First Name'); ?></label>
             <div class="input-box">
-                <input type="text" name="first_name" id="first_name" value="<?php echo $acimEntity->getBillTo()->getFirstName(); ?>" class="input-text required-entry" />
+                <input type="text" name="firstname" id="first_name" value="<?php echo $acimEntity->getBillTo()->getFirstname(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
             <label for="last_name" class="required"><em>*</em><?php echo $this->__('Last Name'); ?></label>
             <div class="input-box">
-                <input type="text" name="last_name" id="last_name" value="<?php echo $acimEntity->getBillTo()->getLastName(); ?>" class="input-text required-entry" />
+                <input type="text" name="lastname" id="last_name" value="<?php echo $acimEntity->getBillTo()->getLastname(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>

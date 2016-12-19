@@ -94,4 +94,26 @@ class CoreValue_Acim_Block_Card extends Mage_Core_Block_Template
         Varien_Profiler::stop('TEST: '.__METHOD__);
         return $html;
     }
+
+    /**
+     * Retrieve availables credit card types
+     *
+     * @return array
+     */
+    public function getCcAvailableTypes()
+    {
+        $types = Mage::getSingleton('payment/config')->getCcTypes();
+        if ($method = Mage::getModel('corevalue_acim/paymentMethod')) {
+            $availableTypes = $method->getConfigData('cctypes');
+            if ($availableTypes) {
+                $availableTypes = explode(',', $availableTypes);
+                foreach ($types as $code=>$name) {
+                    if (!in_array($code, $availableTypes)) {
+                        unset($types[$code]);
+                    }
+                }
+            }
+        }
+        return $types;
+    }
 }

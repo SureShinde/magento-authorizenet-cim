@@ -13,7 +13,6 @@ class CoreValue_Acim_Block_List extends Mage_Core_Block_Template
 
     protected function getProfiles()
     {
-        $customer = Mage::helper('customer')->getCustomer();
-        return Mage::helper('corevalue_acim')->getPaymentCollection($customer->getId(), $customer->getEmail());
+        return Mage::helper('corevalue_acim')->getPaymentCollection(Mage::helper('customer')->getCustomer()->getId());
     }
 }

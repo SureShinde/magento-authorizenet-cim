@@ -128,9 +128,9 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         ;
 
         // trying to get Customer Profile
-        $profileCustomer = $helper->getProfileModel($customer->getId(), $customer->getEmail());
+        $profileCustomer = $helper->getProfile($customer->getId());
 
-        if ($profileCustomer && !empty($profileId = $profileCustomer->getProfileId())) {
+        if (!empty($profileId = $profileCustomer->getProfileId())) {
             $info->setAdditionalInformation('profile_id', $profileId);
 
             // populating payment info with payment profile id in case of selection of saved CC(tokenized)
@@ -142,8 +142,8 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
             if ($paymentId) {
                 // checking if there is such payment profile, payment profile should belongs to exactly this user
-                $paymentModel = $helper->getPaymentModel($profileId, $paymentId);
-                if (!$paymentModel && !$paymentModel->getId()) {
+                $paymentModel = $helper->getPayment($paymentId);
+                if (!$paymentModel->getId()) {
                     Mage::throwException($helper->__('Could not find requested payment profile'));
                 } else {
                     list($expYear, $expMonth) = explode('-', $paymentModel->getExpirationDate());
@@ -314,6 +314,8 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
         /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
         $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
+        /* @var $helperProfile CoreValue_Acim_Helper_Data */
+        $helper                 = Mage::helper('corevalue_acim');
         /* @var $order Mage_Sales_Model_Order */
         $order                  = $payment->getOrder();
 
@@ -324,7 +326,10 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
             // in case if there is valid payment profile will try to perform transaction using it
             if (!$profileId) {
-                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest($payment);
+                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest(
+                    $helper->prepareAcimDataFromPayment($payment)
+                );
+
                 $payment->setAdditionalInformation('profile_id', $profileId);
                 $payment->setAdditionalInformation('payment_id', $paymentId);
             }

@@ -9,43 +9,35 @@ use net\authorize\api\controller as AnetController;
 class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
 {
     /**
+     * Getting Customer Profile by customer id
+     *
      * @param $customerId
-     * @param $email
-     * @return mixed
+     * @return CoreValue_Acim_Model_Profile_Customer
      */
-    public function getProfileModel($customerId, $email)
+    public function getProfile($customerId)
     {
-        $collection = Mage::getResourceModel('corevalue_acim/profile_customer_collection')
-            ->addFieldToFilter('customer_id', $customerId)
-            ->addFieldToFilter('email', $email);
-
-        return $collection->getFirstItem();
+        return Mage::getModel('corevalue_acim/profile_customer')->load($customerId, 'customer_id');
     }
 
     /**
-     * @param $profileId
+     * Getting Customer Payment profile by payment profile ID
+     *
      * @param $paymentId
      * @return bool|object
      */
-    public function getPaymentModel($profileId, $paymentId)
+    public function getPayment($paymentId)
     {
-        $collection = Mage::getResourceModel('corevalue_acim/profile_payment_collection')
-            ->addFieldToFilter('profile_id', $profileId)
-            ->addFieldToFilter('payment_id', $paymentId);
-
-        return $collection->getFirstItem();
+        return Mage::getModel('corevalue_acim/profile_payment')->load($paymentId, 'payment_id');
     }
 
     /**
      * @param $customerId
-     * @param $email
      * @return mixed
      */
-    public function getPaymentCollection($customerId, $email)
+    public function getPaymentCollection($customerId)
     {
         return Mage::getResourceModel('corevalue_acim/profile_payment_collection')
-            ->addFieldToFilter('customer_id', $customerId)
-            ->addFieldToFilter('email', $email);
+            ->addFieldToFilter('customer_id', $customerId);
     }
 
     /**
@@ -69,18 +61,18 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Creating Credit Card object as per Authorize.NET CIM specification
      *
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Varien_Object $card
      * @return AnetAPI\CreditCardType
      */
-    public function getCreditCardObject(Mage_Sales_Model_Order_Payment $payment)
+    public function getCreditCardObject(Varien_Object $card)
     {
         $creditCard = new AnetAPI\CreditCardType();
 
-        $creditCard->setCardNumber($payment->getCcNumber());
-        $creditCard->setExpirationDate(
-            $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT)
-        );
-        $creditCard->setCardCode($payment->getCcCid());
+        $creditCard->setCardNumber($card->getNumber());
+        $creditCard->setExpirationDate($card->getExpDate());
+        if (!empty($card->getCvv())) {
+            $creditCard->setCardCode($card->getCvv());
+        }
 
         return $creditCard;
     }
@@ -101,23 +93,12 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Creating Billing Address object as per Authorize.NET CIM specification
      *
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Varien_Object $billingAddress
      * @return AnetAPI\CustomerAddressType
      */
-    public function getBillingAddressObject(Mage_Sales_Model_Order_Payment $payment)
+    public function getBillingAddressObject(Varien_Object $billingAddress)
     {
         $billTo = new AnetAPI\CustomerAddressType();
-
-        /* @var $billingAddress Mage_Sales_Model_Order_Address */
-        $billingAddress = $payment->getOrder()->getBillingAddress();
-
-        // Create the Bill To info
-        $region = '';
-        if (!empty($billingAddress->getRegion())) {
-            $region = $billingAddress->getRegion();
-        } elseif (!empty($billingAddress->getRegionId())) {
-            $region = $billingAddress->getRegionId();
-        }
 
         $billTo
             ->setFirstName($billingAddress->getFirstname())
@@ -125,7 +106,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ->setCompany($billingAddress->getCompany())
             ->setAddress($billingAddress->getStreetFull())
             ->setCity($billingAddress->getCity())
-            ->setState($region)
+            ->setState($billingAddress->getRegion())
             ->setZip($billingAddress->getPostcode())
             ->setCountry($billingAddress->getCountry())
             ->setPhoneNumber($billingAddress->getTelephone())
@@ -159,19 +140,19 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Getting object of AnetAPI\CustomerProfileType
      *
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Mage_Customer_Model_Customer $customer
      * @param AnetAPI\CustomerPaymentProfileType $paymentProfile
      * @return AnetAPI\CustomerProfileType
      */
     public function getCustomerProfileTypeObject(
-        Mage_Sales_Model_Order_Payment $payment,
+        Mage_Customer_Model_Customer $customer,
         AnetAPI\CustomerPaymentProfileType $paymentProfile
     )
     {
         $customerProfile = new AnetAPI\CustomerProfileType();
 
-        $customerProfile->setMerchantCustomerId($payment->getOrder()->getCustomer()->getId());
-        $customerProfile->setEmail($payment->getOrder()->getCustomer()->getEmail());
+        $customerProfile->setMerchantCustomerId($customer->getId());
+        $customerProfile->setEmail($customer->getEmail());
         $customerProfile->setPaymentProfiles([$paymentProfile]);
 
         return $customerProfile;
@@ -181,18 +162,18 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
      * Trying to update customer profile if exists, and adding new one if aren't.
      *
      * @param $profileId
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Mage_Customer_Model_Customer $customer
      * @return Mage_Core_Model_Abstract
      */
-    public function saveCustomerProfile($profileId, Mage_Sales_Model_Order_Payment $payment)
+    public function saveCustomerProfile($profileId, Mage_Customer_Model_Customer $customer)
     {
         /* @var $profile CoreValue_Acim_Model_Profile_Customer */
         $profile = Mage::getModel('corevalue_acim/profile_customer')->load($profileId, 'profile_id');
 
         $profile
             ->setProfileId($profileId)
-            ->setCustomerId($payment->getOrder()->getCustomer()->getId())
-            ->setEmail($payment->getOrder()->getCustomer()->getEmail())
+            ->setCustomerId($customer->getId())
+            ->setEmail($customer->getEmail())
             ->save()
         ;
 
@@ -202,23 +183,30 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Trying to update customer payment profile if exists, and adding new one if aren't.
      *
+     * @param $customerProfileId
      * @param $paymentProfileId
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param Mage_Customer_Model_Customer $customer
+     * @param Varien_Object $creditCard
      * @return CoreValue_Acim_Model_Profile_Payment
      */
-    public function saveCustomerPaymentProfile($paymentProfileId, Mage_Sales_Model_Order_Payment $payment)
+    public function saveCustomerPaymentProfile(
+        $customerProfileId,
+        $paymentProfileId,
+        Mage_Customer_Model_Customer $customer,
+        Varien_Object $creditCard
+    )
     {
         /* @var $profile CoreValue_Acim_Model_Profile_Payment */
         $profile = Mage::getModel('corevalue_acim/profile_payment')->load($paymentProfileId, 'payment_id');
 
         $profile
-            ->setProfileId($payment->getAdditionalInformation('profile_id'))
+            ->setProfileId($customerProfileId)
             ->setPaymentId($paymentProfileId)
-            ->setCustomerId($payment->getOrder()->getCustomer()->getId())
-            ->setEmail($payment->getOrder()->getCustomer()->getEmail())
-            ->setCcLast4($payment->getCcLast4())
-            ->setCcType($payment->getCcType())
-            ->setExpirationDate($this->formatExpDate($payment))
+            ->setCustomerId($customer->getId())
+            ->setEmail($customer->getEmail())
+            ->setCcLast4($creditCard->getNumber())
+            ->setCcType($creditCard->getType())
+            ->setExpirationDate($creditCard->getExpDate())
             ->save()
         ;
 
@@ -354,5 +342,91 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     public function formatExpDate(Mage_Sales_Model_Order_Payment $payment)
     {
         return $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Prepare Profiles object from $_POST data
+     *
+     * @param Mage_Customer_Model_Customer $customer
+     * @return Varien_Object
+     */
+    public function prepareAcimDataFromPost(Mage_Customer_Model_Customer $customer)
+    {
+        // getting post data
+        $data           = Mage::app()->getRequest()->getPost();
+
+        // prepare basic information, X chars might be used to keep old value
+        $card = [
+            'number'        => $data['number'],
+            'exp_date'      => $data['exp_date'],
+        ];
+
+        // CVV code will appears in this array only in case if there is no X chars because this chars being used to not
+        // update this field
+        if (strpos($data['cvv'], 'X') === false) {
+            $card['cvv'] = $data['cvv'];
+        }
+        // CC type isn't mandatory, will be determined by Auth.Net automatically
+        if (strpos($data['cc_type'], 'X') === false) {
+            $card['type'] = $data['cc_type'];
+        }
+
+        return new Varien_Object([
+            'card'      => new Varien_Object($card),
+            'customer'  => $customer,
+            'bill_to'   => new Varien_Object([
+                'firstname'         => $data['firstname'],
+                'lastname'          => $data['lastname'],
+                'company'           => $data['company'],
+                'address'           => $data['address'],
+                'city'              => $data['city'],
+                'region'            => empty($data['region']) ? $data['region_id'] : $data['region'],
+                'zip'               => $data['zip'],
+                'country'           => $data['country'],
+                'phone'             => $data['phone'],
+                'fax'               => $data['fax'],
+            ]),
+        ]);
+    }
+
+    /**
+     * Prepare Profiles object from $payment object
+     *
+     * @param Mage_Sales_Model_Order_Payment $payment
+     * @return Varien_Object
+     */
+    public function prepareAcimDataFromPayment(Mage_Sales_Model_Order_Payment $payment)
+    {
+        /* @var $billingAddress Mage_Sales_Model_Order_Address */
+        $billingAddress = $payment->getOrder()->getBillingAddress();
+
+        $region = '';
+        if (!empty($billingAddress->getRegion())) {
+            $region = $billingAddress->getRegion();
+        } elseif (!empty($billingAddress->getRegionId())) {
+            $region = $billingAddress->getRegionId();
+        }
+
+        return new Varien_Object([
+            'card'      => new Varien_Object([
+                'number'            => $payment->getCcNumber(),
+                'exp_date'          => $payment->getCcExpYear() . '-' . str_pad($payment->getCcExpMonth(), 2, '0', STR_PAD_LEFT),
+                'cvv'               => $payment->getCcCid(),
+                'type'              => $payment->getCcType(),
+            ]),
+            'customer'  => $payment->getOrder()->getCustomer(),
+            'bill_to'   => new Varien_Object([
+                'firstname'         => $billingAddress->getFirstname(),
+                'lastname'          => $billingAddress->getLastname(),
+                'company'           => $billingAddress->getCompany(),
+                'address'           => $billingAddress->getStreetFull(),
+                'city'              => $billingAddress->getCity(),
+                'region'            => $region,
+                'zip'               => $billingAddress->getPostcode(),
+                'country'           => $billingAddress->getCountry(),
+                'phone'             => $billingAddress->getTelephone(),
+                'fax'               => $billingAddress->getFax(),
+            ]),
+        ]);
     }
 }

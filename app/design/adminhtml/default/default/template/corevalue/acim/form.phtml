@@ -3,7 +3,7 @@
 $_code = $this->getMethodCode();
 
 $customer           = Mage::getBlockSingleton('adminhtml/sales_order_create_form_account');
-$paymentProfiles    = $this->getPaymentProfiles($customer->getFormValues()['id'], $customer->getFormValues()['email']);
+$paymentProfiles    = $this->getPaymentProfiles($customer->getFormValues()['id']);
 ?>
 
 <div class="form-list" id="payment_form_<?php echo $this->getMethodCode() ?>" style="display:none;">
