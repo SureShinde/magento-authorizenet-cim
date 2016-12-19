@@ -83,4 +83,24 @@ class CoreValue_Acim_IndexController extends Mage_Core_Controller_Front_Action
         return $this->_redirect('acimprofiles');
     }
 
+    /**
+     * Updating CC info
+     */
+    public function updateAction()
+    {
+        if (!Mage::helper('customer')->isLoggedIn()) {
+            return $this->_redirect('customer/account/login');
+        }
+
+        // trying to load related profile
+        $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load((int) Mage::app()->getRequest()->getParam('id'));
+
+        if (!$paymentProfile->getId()) {
+            Mage::getSingleton('core/session')->addError($this->__('There is no such credit card'));
+            return $this->_redirect('acimprofiles');
+        }
+
+        return $this->_redirect('acimprofiles');
+    }
+
 }

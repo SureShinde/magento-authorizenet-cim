@@ -346,7 +346,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                         'company'       => $response->getPaymentProfile()->getbillTo()->getCompany(),
                         'address'       => $response->getPaymentProfile()->getbillTo()->getAddress(),
                         'city'          => $response->getPaymentProfile()->getbillTo()->getCity(),
-                        'state'         => $response->getPaymentProfile()->getbillTo()->getState(),
+                        'region'        => $response->getPaymentProfile()->getbillTo()->getState(),
                         'zip'           => $response->getPaymentProfile()->getbillTo()->getZip(),
                         'country'       => $response->getPaymentProfile()->getbillTo()->getCountry(),
                     ]),

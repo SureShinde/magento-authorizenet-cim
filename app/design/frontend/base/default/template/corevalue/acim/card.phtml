@@ -6,62 +6,97 @@ $paymentProfile         = $this->getPaymentProfile();
 $acimEntity             = $this->retrievePaymentProfile();
 ?>
 <div class="page-title">
-    <h1><?php echo $this->__('Details for') ?> XXXX-XXXX-XXXX-<?php echo $paymentProfile->getCcLast4(); ?></h1>
+    <h2 class="legend"><?php echo $this->__('Details for') ?> XXXX-XXXX-XXXX-<?php echo $paymentProfile->getCcLast4(); ?></h2>
 </div>
 
-<table class="data-table" id="my-card-table" >
-    <tbody>
-        <tr>
-            <td><?php echo $this->__('Credit Card Expiration Date'); ?></td>
-            <td><?php echo $paymentProfile->getExpirationDate(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Credit Card Type'); ?></td>
-            <td><?php echo $acimEntity->getCreditCard()->getType(); ?></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('First Name'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getFirstName(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Last Name'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getLastName(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Company'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getCompany(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Address'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getAddress(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('City'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getCity(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('State'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getState(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Zip'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getZip(); ?></td>
-        </tr>
-        <tr>
-            <td><?php echo $this->__('Country'); ?></td>
-            <td><?php echo $acimEntity->getBillTo()->getCountry(); ?></td>
-        </tr>
-    </tbody>
-</table>
+<em><b>*<?php echo $this->__('Keep fields without changes if you do not want to modify them.'); ?></b></em>
 
-<div class="buttons-set">
-    <p class="back-link"><a href="<?php echo $this->getUrl('acimprofiles') ?>"><small>&laquo; </small><?php echo $this->__('Back') ?></a></p>
-</div>
+<form method="post" name="add-edit-cc" action="<?php echo $this->getUrl('acimprofiles/index/update') ?>">
+    <?php echo $this->getBlockHtml('formkey')?>
+    <input type="hidden" name="payment_id" value="<?php echo $paymentProfile->getId(); ?>" />
+    <ul class="form-list">
+        <li>
+            <label for="number" class="required"><em>*</em><?php echo $this->__('Credit Card Number'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="number" id="number" value="<?php echo $acimEntity->getCreditCard()->getNumber(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="exp_date" class="required"><em>*</em><?php echo $this->__('Credit Expiration Date'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="exp_date" id="exp_date" value="<?php echo $acimEntity->getCreditCard()->getExpDate(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label><?php echo $this->__('Credit Card Type'); ?>: <?php echo $acimEntity->getCreditCard()->getType(); ?></label>
+        </li>
+        <li>&nbsp;<b><?php echo $this->__('Billing Address'); ?></b></li>
+        <li>
+            <label for="first_name" class="required"><em>*</em><?php echo $this->__('First Name'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="first_name" id="first_name" value="<?php echo $acimEntity->getBillTo()->getFirstName(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="last_name" class="required"><em>*</em><?php echo $this->__('Last Name'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="last_name" id="last_name" value="<?php echo $acimEntity->getBillTo()->getLastName(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="company" class="required"><em>*</em><?php echo $this->__('Company'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="company" id="company" value="<?php echo $acimEntity->getBillTo()->getCompany(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="address" class="required"><em>*</em><?php echo $this->__('Address'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="address" id="address" value="<?php echo $acimEntity->getBillTo()->getAddress(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="city" class="required"><em>*</em><?php echo $this->__('City'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="city" id="city" value="<?php echo $acimEntity->getBillTo()->getCity(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="region_id" class="required"><em>*</em><?php echo $this->__('State/Province'); ?></label>
+            <div class="input-box">
+                <select id="region_id" name="region_id" title="<?php echo Mage::helper('core')->quoteEscape($this->__('State/Province')) ?>" class="validate-select" style="display:none;">
+                    <option value=""><?php echo $this->__('Please select region, state or province') ?></option>
+                </select>
+                <script type="text/javascript">
+                    //<![CDATA[
+                    $('region_id').setAttribute('defaultValue',  "<?php echo $acimEntity->getBillTo()->getRegionId() ?>");
+                    //]]>
+                </script>
+                <input type="text" id="region" name="region" value="<?php echo $this->escapeHtml($acimEntity->getBillTo()->getRegion()) ?>"  title="<?php echo Mage::helper('core')->quoteEscape($this->__('State/Province')) ?>" class="input-text <?php echo $this->helper('customer/address')->getAttributeValidationClass('region') ?>" />
+            </div>
+        </li>
+        <li>
+            <label for="zip" class="required"><em>*</em><?php echo $this->__('Zip'); ?></label>
+            <div class="input-box">
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="zip" id="zip" value="<?php echo $acimEntity->getBillTo()->getZip(); ?>" class="input-text" />
+            </div>
+        </li>
+        <li>
+            <label for="country" class="required"><em>*</em><?php echo $this->__('Country'); ?></label>
+            <div class="input-box">
+                <?php echo $this->getCountryHtmlSelect() ?>
+            </div>
+        </li>
+    </ul>
+    <div class="buttons-set">
+        <p class="back-link"><a href="<?php echo $this->getUrl('acimprofiles'); ?>"><small>&laquo; </small><?php echo $this->__('Back') ?></a></p>
+        <button data-action="save-customer-address" type="submit" title="<?php echo Mage::helper('core')->quoteEscape($this->__('Save Credit Card')) ?>" class="button"><span><span><?php echo $this->__('Save Credit Card') ?></span></span></button>
+    </div>
+</form>
 
 <script type="text/javascript">
-    decorateTable('my-card-table');
+    //<![CDATA[
+    //var dataForm = new VarienForm('form-validate', true);
+    new RegionUpdater('country', 'region', 'region_id', <?php echo $this->helper('directory')->getRegionJson() ?>, undefined, 'zip');
+    //]]>
 </script>
