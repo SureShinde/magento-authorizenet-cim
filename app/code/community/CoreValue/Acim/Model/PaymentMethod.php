@@ -218,13 +218,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         /* @var $helperTransactions CoreValue_Acim_Helper_PaymentTransactions*/
         $helperTransactions     = Mage::helper('corevalue_acim/paymentTransactions');
 
-        $transaction = $payment->getTransactionForVoid();
-
-        if (empty($transaction)) {
-            $transaction = Mage::getModel('sales/order_payment_transaction')
-                ->setOrderPaymentObject($payment)
-                ->loadByTxnId($payment->getLastTransId());
-        }
+        $transaction = $payment->lookupTransaction($payment->getRefundTransactionId());
 
         if ($transaction->getTxnId()) {
             $result = $helperTransactions->processRefundTransactionRequest($transaction->getTxnId(), $amount, $payment);
