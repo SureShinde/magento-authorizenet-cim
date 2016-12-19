@@ -349,6 +349,8 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                         'region'        => $response->getPaymentProfile()->getbillTo()->getState(),
                         'zip'           => $response->getPaymentProfile()->getbillTo()->getZip(),
                         'country'       => $response->getPaymentProfile()->getbillTo()->getCountry(),
+                        'phone'         => $response->getPaymentProfile()->getbillTo()->getPhoneNumber(),
+                        'fax'           => $response->getPaymentProfile()->getbillTo()->getFaxNumber(),
                     ]),
                 ]);
             } else {

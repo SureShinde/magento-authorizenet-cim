@@ -11,19 +11,19 @@ $acimEntity             = $this->retrievePaymentProfile();
 
 <em><b>*<?php echo $this->__('Keep fields without changes if you do not want to modify them.'); ?></b></em>
 
-<form method="post" name="add-edit-cc" action="<?php echo $this->getUrl('acimprofiles/index/update', ['id' => $paymentProfile->getId()]) ?>">
+<form method="post" name="add-edit-cc-form" id="add-edit-cc-form" action="<?php echo $this->getUrl('acimprofiles/index/update', ['id' => $paymentProfile->getId()]) ?>">
     <?php echo $this->getBlockHtml('formkey')?>
     <ul class="form-list">
         <li>
             <label for="number" class="required"><em>*</em><?php echo $this->__('Credit Card Number'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="number" id="number" value="<?php echo $acimEntity->getCreditCard()->getNumber(); ?>" class="input-text" />
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="number" id="number" value="<?php echo $acimEntity->getCreditCard()->getNumber(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
             <label for="exp_date" class="required"><em>*</em><?php echo $this->__('Credit Expiration Date'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="exp_date" id="exp_date" value="<?php echo $acimEntity->getCreditCard()->getExpDate(); ?>" class="input-text" />
+                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="exp_date" id="exp_date" value="<?php echo $acimEntity->getCreditCard()->getExpDate(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
@@ -33,31 +33,43 @@ $acimEntity             = $this->retrievePaymentProfile();
         <li>
             <label for="first_name" class="required"><em>*</em><?php echo $this->__('First Name'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="first_name" id="first_name" value="<?php echo $acimEntity->getBillTo()->getFirstName(); ?>" class="input-text" />
+                <input type="text" name="first_name" id="first_name" value="<?php echo $acimEntity->getBillTo()->getFirstName(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
             <label for="last_name" class="required"><em>*</em><?php echo $this->__('Last Name'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="last_name" id="last_name" value="<?php echo $acimEntity->getBillTo()->getLastName(); ?>" class="input-text" />
+                <input type="text" name="last_name" id="last_name" value="<?php echo $acimEntity->getBillTo()->getLastName(); ?>" class="input-text required-entry" />
+            </div>
+        </li>
+        <li>
+            <label for="phone" class="required"><em>*</em><?php echo $this->__('Phone Number'); ?></label>
+            <div class="input-box">
+                <input type="text" name="phone" id="phone" value="<?php echo $acimEntity->getBillTo()->getPhone(); ?>" class="input-text required-entry validate-phoneLax" />
+            </div>
+        </li>
+        <li>
+            <label for="fax"><?php echo $this->__('Fax Name'); ?></label>
+            <div class="input-box">
+                <input type="text" name="fax" id="fax" value="<?php echo $acimEntity->getBillTo()->getFax(); ?>" class="input-text validate-phoneLax" />
             </div>
         </li>
         <li>
             <label for="company"><?php echo $this->__('Company'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="company" id="company" value="<?php echo $acimEntity->getBillTo()->getCompany(); ?>" class="input-text" />
+                <input type="text" name="company" id="company" value="<?php echo $acimEntity->getBillTo()->getCompany(); ?>" class="input-text" />
             </div>
         </li>
         <li>
             <label for="address" class="required"><em>*</em><?php echo $this->__('Address'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="address" id="address" value="<?php echo $acimEntity->getBillTo()->getAddress(); ?>" class="input-text" />
+                <input type="text" name="address" id="address" value="<?php echo $acimEntity->getBillTo()->getAddress(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
             <label for="city" class="required"><em>*</em><?php echo $this->__('City'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="city" id="city" value="<?php echo $acimEntity->getBillTo()->getCity(); ?>" class="input-text" />
+                <input type="text" name="city" id="city" value="<?php echo $acimEntity->getBillTo()->getCity(); ?>" class="input-text required-entry" />
             </div>
         </li>
         <li>
@@ -77,7 +89,7 @@ $acimEntity             = $this->retrievePaymentProfile();
         <li>
             <label for="zip" class="required"><em>*</em><?php echo $this->__('Zip'); ?></label>
             <div class="input-box">
-                <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" name="zip" id="zip" value="<?php echo $acimEntity->getBillTo()->getZip(); ?>" class="input-text" />
+                <input type="text" name="zip" id="zip" value="<?php echo $acimEntity->getBillTo()->getZip(); ?>" class="input-text required-entry validate-zip" />
             </div>
         </li>
         <li>
@@ -95,7 +107,7 @@ $acimEntity             = $this->retrievePaymentProfile();
 
 <script type="text/javascript">
     //<![CDATA[
-    //var dataForm = new VarienForm('form-validate', true);
+    var customForm = new VarienForm('add-edit-cc-form');
     new RegionUpdater('country', 'region', 'region_id', <?php echo $this->helper('directory')->getRegionJson() ?>, undefined, 'zip');
     //]]>
 </script>

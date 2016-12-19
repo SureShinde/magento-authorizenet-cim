@@ -337,11 +337,9 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     public function updatePayment(Mage_Sales_Model_Order_Payment $payment, $response)
     {
         $payment
-            //->setStatus(CoreValue_Acim_Model_PaymentMethod::STATUS_APPROVED)
             ->setTransactionId($response->getTransId())
             ->setIsTransactionClosed(0)
             ->setTxnId($response->getTransId())
-            //->setParentTxnId($response->getTransId())
             ->setCcTransId($response->getTransId());
 
         return $response;
