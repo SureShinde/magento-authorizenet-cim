@@ -11,9 +11,8 @@ $acimEntity             = $this->retrievePaymentProfile();
 
 <em><b>*<?php echo $this->__('Keep fields without changes if you do not want to modify them.'); ?></b></em>
 
-<form method="post" name="add-edit-cc" action="<?php echo $this->getUrl('acimprofiles/index/update') ?>">
+<form method="post" name="add-edit-cc" action="<?php echo $this->getUrl('acimprofiles/index/update', ['id' => $paymentProfile->getId()]) ?>">
     <?php echo $this->getBlockHtml('formkey')?>
-    <input type="hidden" name="payment_id" value="<?php echo $paymentProfile->getId(); ?>" />
     <ul class="form-list">
         <li>
             <label for="number" class="required"><em>*</em><?php echo $this->__('Credit Card Number'); ?></label>

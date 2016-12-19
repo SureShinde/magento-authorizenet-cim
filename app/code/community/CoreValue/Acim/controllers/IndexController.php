@@ -100,6 +100,11 @@ class CoreValue_Acim_IndexController extends Mage_Core_Controller_Front_Action
             return $this->_redirect('acimprofiles');
         }
 
+        if (!$this->_validateFormKey()) {
+            Mage::getSingleton('core/session')->addError($this->__('Please, try again to fill and submit the form'));
+            return $this->_redirect('acimprofiles');
+        }
+
         return $this->_redirect('acimprofiles');
     }
 
