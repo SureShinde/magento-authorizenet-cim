@@ -110,6 +110,7 @@ class CoreValue_Acim_IndexController extends Mage_Core_Controller_Front_Action
             // trying to load related profile
             $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load((int) Mage::app()->getRequest()->getParam('id'));
 
+            // trying to find customer profile id and payment profile id
             if ($paymentProfile && $paymentProfile->getProfileId() && $paymentProfile->getPaymentId()) {
                 $profileId = $paymentProfile->getProfileId();
                 $paymentId = $paymentProfile->getPaymentId();
@@ -122,18 +123,22 @@ class CoreValue_Acim_IndexController extends Mage_Core_Controller_Front_Action
 
             $data = $helper->prepareAcimDataFromPost($customer);
 
+            // All errors will be thrown in helpers
+            // Duplicates will be handled by Authorize.Net CIM API, our helpers will also handle such situations.
+            // If there is no customer profile will try to create it and to create payment profile,
+            // If payment profile will fail, we will try once more in different way in few next steps.
             if (!$profileId) {
-                $helperProfile->processCreateCustomerProfileRequest($data);
+                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest($data);
             }
 
+            // trying to create payment profile
             if ($profileId && !$paymentId) {
-                // new payment
-            } elseif ($profileId && $paymentId) {
-                // update existing
+                $helperProfile->processCreatePaymentProfileRequest($profileId, $data);
             }
-
-
-            $helperProfile->processUpdateCustomerPaymentProfileRequest();
+            // or to update existing payment profile
+            elseif ($profileId && $paymentId) {
+                $helperProfile->processUpdateCustomerPaymentProfileRequest($profileId, $paymentId, $data);
+            }
         } catch (Exception $e) {
             Mage::getSingleton('core/session')->addError($e->getMessage());
             return $this->_redirect('acimprofiles/index/edit', ['id' => $paymentProfile->getId()]);

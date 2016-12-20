@@ -321,14 +321,14 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
         if (!$order->getCustomerIsGuest()) {
             // getting customer profile id and customer payment profile id
-            $profileId = $payment->getAdditionalInformation('profile_id');
-            $paymentId = $payment->getAdditionalInformation('payment_id');
+            $profileId  = $payment->getAdditionalInformation('profile_id');
+            $paymentId  = $payment->getAdditionalInformation('payment_id');
+            /* @var $data Varien_Object */
+            $data       = $helper->prepareAcimDataFromPayment($payment);
 
             // in case if there is valid payment profile will try to perform transaction using it
             if (!$profileId) {
-                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest(
-                    $helper->prepareAcimDataFromPayment($payment)
-                );
+                list($profileId, $paymentId) = $helperProfile->processCreateCustomerProfileRequest($data);
 
                 $payment->setAdditionalInformation('profile_id', $profileId);
                 $payment->setAdditionalInformation('payment_id', $paymentId);
@@ -336,7 +336,7 @@ class CoreValue_Acim_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
             if ($profileId) {
                 if (empty($paymentId)) {
-                    $response = $helperProfile->processCreatePaymentProfileRequest($payment);
+                    $response = $helperProfile->processCreatePaymentProfileRequest($profileId, $data);
                     $paymentId = $response->getCustomerPaymentProfileId();
                     $payment->setAdditionalInformation('payment_id', $paymentId);
                 }

@@ -25,8 +25,8 @@
                 <td><?php echo $profile->getCcType() ? $profile->getCcType() : '-'; ?>&nbsp;</td>
                 <td><?php echo $profile->getExpirationDate() ?></td>
                 <td>
-                    <a href="<?php echo $this->getUrl('acimprofiles/index/edit', ['id' => $profile->getId()]) ?>"><?php echo $this->__('Details') ?></a>
-                    <a onclick="return confirm('<?php echo $this->__('Are you sure?') ?>');" href="<?php echo $this->getUrl('acimprofiles/index/delete', ['id' => $profile->getId()]) ?>"><?php echo $this->__('Delete') ?></a>
+                    <a href="<?php echo $this->getUrl('acimprofiles/index/edit', ['id' => $profile->getId()]) ?>"><?php echo $this->__('View/Edit'); ?></a>
+                    <a onclick="return confirm('<?php echo $this->__('Are you sure?'); ?>');" href="<?php echo $this->getUrl('acimprofiles/index/delete', ['id' => $profile->getId()]) ?>"><?php echo $this->__('Delete'); ?></a>
                 </td>
             </tr>
         <?php endforeach ?>

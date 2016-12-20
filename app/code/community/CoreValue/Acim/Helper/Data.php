@@ -37,7 +37,9 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
     public function getPaymentCollection($customerId)
     {
         return Mage::getResourceModel('corevalue_acim/profile_payment_collection')
-            ->addFieldToFilter('customer_id', $customerId);
+            ->addFieldToFilter('customer_id', $customerId)
+            ->setOrder('id', 'DESC')
+        ;
     }
 
     /**
@@ -70,7 +72,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
 
         $creditCard->setCardNumber($card->getNumber());
         $creditCard->setExpirationDate($card->getExpDate());
-        if (!empty($card->getCvv())) {
+        if (!empty($card->getCvv()) && strpos($card->getCvv(), 'X') === false) {
             $creditCard->setCardCode($card->getCvv());
         }
 
@@ -104,12 +106,12 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ->setFirstName($billingAddress->getFirstname())
             ->setLastName($billingAddress->getLastname())
             ->setCompany($billingAddress->getCompany())
-            ->setAddress($billingAddress->getStreetFull())
+            ->setAddress($billingAddress->getAddress())
             ->setCity($billingAddress->getCity())
             ->setState($billingAddress->getRegion())
-            ->setZip($billingAddress->getPostcode())
+            ->setZip($billingAddress->getZip())
             ->setCountry($billingAddress->getCountry())
-            ->setPhoneNumber($billingAddress->getTelephone())
+            ->setPhoneNumber($billingAddress->getPhone())
             ->setFaxNumber($billingAddress->getFax())
         ;
 
@@ -204,11 +206,17 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ->setPaymentId($paymentProfileId)
             ->setCustomerId($customer->getId())
             ->setEmail($customer->getEmail())
-            ->setCcLast4($creditCard->getNumber())
             ->setCcType($creditCard->getType())
-            ->setExpirationDate($creditCard->getExpDate())
-            ->save()
         ;
+
+        if (strpos($creditCard->getExpDate(), 'X') === false) {
+            $profile->setExpirationDate($creditCard->getExpDate());
+        }
+        if (strpos($creditCard->getNumber(), 'X') === false) {
+            $profile->setCcLast4(substr($creditCard->getNumber(), -4, 4));
+        }
+
+        $profile->save();
 
         return $profile;
     }
@@ -293,7 +301,6 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
         $tOrder = new AnetAPI\OrderType();
 
         $tOrder->setInvoiceNumber($order->getIncrementId());
-        //$tOrder->setDescription("Product Description");
 
         return $tOrder;
     }
@@ -367,7 +374,7 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             $card['cvv'] = $data['cvv'];
         }
         // CC type isn't mandatory, will be determined by Auth.Net automatically
-        if (strpos($data['cc_type'], 'X') === false) {
+        if (!empty($data['cc_type'])) {
             $card['type'] = $data['cc_type'];
         }
 

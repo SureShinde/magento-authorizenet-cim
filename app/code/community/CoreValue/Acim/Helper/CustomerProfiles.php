@@ -107,6 +107,7 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                         $data->getCard()
                     );
                 }
+                $profileId = $response->getCustomerProfileId();
             } elseif ($response->getMessages()->getMessage()[0]->getCode() == 'E00039') {
                 $profileId = preg_replace('/\D+/', '', $response->getMessages()->getMessage()[0]->getText());
                 Mage::log('Customer Profile Saved: ' . $profileId, Zend_Log::DEBUG, 'cv_acim.log');
@@ -271,26 +272,27 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
     /**
      * Send Credit Card to secure storage on Authorize.Net (CIM)
      *
-     * @param Mage_Sales_Model_Order_Payment $payment
+     * @param int $customerProfileId
+     * @param Varien_Object $data
      * @return object
      */
-    public function processCreatePaymentProfileRequest(Mage_Sales_Model_Order_Payment $payment)
+    public function processCreatePaymentProfileRequest($customerProfileId, Varien_Object $data)
     {
         /* @var $helper CoreValue_Acim_Helper_Data */
         $helper             = Mage::helper('corevalue_acim');
 
         /* @var $creditCard AnetAPI\CreditCardType */
-        $creditCard         = $helper->getCreditCardObject($payment);
+        $creditCard         = $helper->getCreditCardObject($data->getCard());
         /* @var $paymentCreditCard AnetAPI\PaymentType */
         $paymentCreditCard  = $helper->getPaymentTypeObject($creditCard);
         /* @var $billTo AnetAPI\CustomerAddressType */
-        $billTo             = $helper->getBillingAddressObject($payment);
+        $billTo             = $helper->getBillingAddressObject($data->getBillTo());
         /* @var $paymentProfile AnetAPI\CustomerPaymentProfileType */
         $paymentProfile     = $helper->getCustomerPaymentTypeObject($billTo, $paymentCreditCard);
 
         // preparing request
         $request = $this->initNewRequest(new AnetAPI\CreateCustomerPaymentProfileRequest());
-        $request->setCustomerProfileId($payment->getAdditionalInformation('profile_id'));
+        $request->setCustomerProfileId($customerProfileId);
         $request->setPaymentProfile($paymentProfile);
 
         // executing request
@@ -322,8 +324,12 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
         }
 
         // saving payment profile to DB
-        // ToDO: need to adjust this code to new version
-        $helper->saveCustomerPaymentProfile($response->getCustomerPaymentProfileId(), $payment);
+        $helper->saveCustomerPaymentProfile(
+            $customerProfileId,
+            $response->getCustomerPaymentProfileId(),
+            $data->getCustomer(),
+            $data->getCard()
+        );
 
         return $response;
     }
@@ -376,76 +382,66 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @param $profileId
-     * @param $paymentId
-     * @param $billingInfo
+     * @param int $customerProfileId
+     * @param int $paymentProfileId
+     * @param Varien_Object $data
      * @return object
      */
-    public function processUpdateCustomerPaymentProfileRequest($profileId, $paymentId, $billingInfo)
+    public function processUpdateCustomerPaymentProfileRequest($customerProfileId, $paymentProfileId, Varien_Object $data)
     {
-        // We're updating the billing address but everything has to be passed in an update
-        // For card information you can pass exactly what comes back from an GetCustomerPaymentProfile
-        // if you don't need to update that info Create the payment data for a credit card
-        $ccNumber = htmlentities($billingInfo['payment']['cc_number']);
-        $ccExpDate = intval($billingInfo['payment']['cc_exp_year']) . '-' . str_pad(intval($billingInfo['payment']['cc_exp_month']), 2, '0', STR_PAD_LEFT);
-        $ccExpDate = 'XXXX-XX' ? 'XXXX' : $ccExpDate;
-        $cvv = $billingInfo['payment']['cc_cid'];
-        $creditCard = new AnetAPI\CreditCardType();
-        $creditCard->setCardNumber($ccNumber);
-        $creditCard->setExpirationDate($ccExpDate);
-        $creditCard->setCardCode($cvv);
-        $paymentCreditCard = new AnetAPI\PaymentType();
-        $paymentCreditCard->setCreditCard($creditCard);
+        /* @var $helper CoreValue_Acim_Helper_Data */
+        $helper             = Mage::helper('corevalue_acim');
 
-        // Create the Bill To info
-        $region = '';
-        if (isset($billingInfo['region']) && $billingInfo['region'] != "") {
-            $region = $billingInfo['region'];
-        } elseif (isset($billingInfo['region_id']) && $billingInfo['region_id'] != "") {
-            $region = $billingInfo['region_id'];
-        }
-        $billTo = new AnetAPI\CustomerAddressType();
-        $billTo->setFirstName($billingInfo['first_name'])
-            ->setLastName($billingInfo['last_name'])
-            ->setCompany($billingInfo['company'])
-            ->setAddress($billingInfo['address'])
-            ->setCity($billingInfo['city'])
-            ->setState($region)
-            ->setZip($billingInfo['zip'])
-            ->setCountry($billingInfo['bill']['country_id'])
-            ->setPhoneNumber($billingInfo['telephone'])
-            ->setFaxNumber($billingInfo['fax']);
-
+        /* @var $creditCard AnetAPI\CreditCardType */
+        $creditCard         = $helper->getCreditCardObject($data->getCard());
+        /* @var $paymentCreditCard AnetAPI\PaymentType */
+        $paymentCreditCard  = $helper->getPaymentTypeObject($creditCard);
+        /* @var $billTo AnetAPI\CustomerAddressType */
+        $billTo             = $helper->getBillingAddressObject($data->getBillTo());
+        /* @var $paymentProfile AnetAPI\CustomerPaymentProfileType */
         // Create a new Customer Payment Profile
         $paymentProfile = new AnetAPI\CustomerPaymentProfileExType();
         $paymentProfile->setCustomerType('individual')
-            ->setCustomerPaymentProfileId($paymentId)
+            ->setCustomerPaymentProfileId($paymentProfileId)
             ->setBillTo($billTo)
             ->setPayment($paymentCreditCard);
-            //->setDefaultPaymentProfile(true);
 
-        //Set profile ids of profile to be updated
+        // Set customer profile id to be updated
         $request = $this->initNewRequest(new AnetAPI\UpdateCustomerPaymentProfileRequest());
-        $request->setCustomerProfileId($profileId);
+        $request->setCustomerProfileId($customerProfileId);
         $request->setPaymentProfile($paymentProfile);
 
         // Submit a UpdatePaymentProfileRequest
         $controller = new AnetController\UpdateCustomerPaymentProfileController($request);
         $response = $controller->executeWithApiResponse($this->_mode);
+
         if (($response != null)) {
-            if ($response->getMessages()->getResultCode() == "Ok") {
-                echo "Update Customer Payment Profile SUCCESS: " . "\n";
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                Mage::log(
+                    'Update Customer Payment Profile SUCCESS:' . $customerProfileId . ' / ' . $paymentProfileId,
+                    Zend_Log::DEBUG,
+                    'cv_acim.log'
+                );
             } else {
                 Mage::throwException(
-                    Mage::helper('corevalue_acim')->__("UpdateCustomerPaymentProfile ") .
-                    Mage::helper('corevalue_acim')->__(" Error code  : ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                    Mage::helper('corevalue_acim')->__(" Error message  : ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                    Mage::helper('corevalue_acim')->__('processUpdateCustomerPaymentProfileRequest()') .
+                    Mage::helper('corevalue_acim')->__('Error code: ') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                    Mage::helper('corevalue_acim')->__('Error message: ') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
         } else {
             Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
             Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
+
+
+        // saving payment profile to DB
+        $helper->saveCustomerPaymentProfile(
+            $customerProfileId,
+            $paymentProfileId,
+            $data->getCustomer(),
+            $data->getCard()
+        );
 
         return $response;
     }

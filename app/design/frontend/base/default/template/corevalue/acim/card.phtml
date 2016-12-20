@@ -6,10 +6,14 @@ $paymentProfile         = $this->getPaymentProfile();
 $acimEntity             = $this->retrievePaymentProfile();
 ?>
 <div class="page-title">
+    <?php if ($paymentProfile->getId()): ?>
     <h2 class="legend"><?php echo $this->__('Details for') ?> XXXX-XXXX-XXXX-<?php echo $paymentProfile->getCcLast4(); ?></h2>
+    <?php else: ?>
+    <h2 class="legend"><?php echo $this->__('Adding new Credit Card') ?></h2>
+    <?php endif; ?>
 </div>
 
-<?php if ($paymentProfile->getId()) : ?>
+<?php if ($paymentProfile->getId()): ?>
 <em><?php echo $this->__('Keep XXXX in case if you do not want to modify CC number, CVV/CID or Expiration Date.'); ?></em>
 <?php endif; ?>
 
@@ -38,10 +42,9 @@ $acimEntity             = $this->retrievePaymentProfile();
             <label for="cc_type"><?php echo $this->__('Credit Card Type'); ?>: <?php echo $acimEntity->getCreditCard()->getType(); ?></label>
             <div class="input-box">
                 <select id="cc_type" name="cc_type" class="required-entry">
-                    <option value=""><?php echo $this->__('--Please Select--')?></option>
-                    <?php $_ccType = $this->getInfoData('cc_type') ?>
+                    <option value=""><?php echo $this->__('--Please Select--'); ?></option>
                     <?php foreach ($this->getCcAvailableTypes() as $_typeCode => $_typeName): ?>
-                        <option value="<?php echo $_typeCode ?>"<?php if (str_replace(' ', '', $_typeName) == $acimEntity->getCreditCard()->getType()): ?> selected<?php endif; ?>><?php echo $_typeName ?></option>
+                        <option value="<?php echo $_typeCode ?>"<?php if ($_typeCode == $paymentProfile->getCcType()): ?> selected<?php endif; ?>><?php echo $_typeName ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
