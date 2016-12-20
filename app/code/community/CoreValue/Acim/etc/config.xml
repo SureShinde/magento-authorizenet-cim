@@ -45,6 +45,18 @@
                 <class>CoreValue_Acim_Helper</class>
             </corevalue_acim>
         </helpers>
+
+        <events>
+            <customer_save_before>
+                <observers>
+                    <corevalue_acim_email_change>
+                        <type>singleton</type>
+                        <class>corevalue_acim/observer</class>
+                        <method>customerSaveBefore</method>
+                    </corevalue_acim_email_change>
+                </observers>
+            </customer_save_before>
+        </events>
     </global>
 
     <frontend>

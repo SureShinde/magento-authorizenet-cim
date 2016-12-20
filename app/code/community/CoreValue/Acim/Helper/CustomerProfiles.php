@@ -119,14 +119,14 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                     Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
+
+            return [
+                $profileId, // profile ID
+                (!empty($paymentProfileId) ? $paymentProfileId : null) // payment profile ID
+            ];
         }
 
-        return [
-            $profileId, // profile ID
-            (!empty($paymentProfileId) ? $paymentProfileId : null) // payment profile ID
-        ];
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
@@ -205,13 +205,12 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
      * @param $description
      * @return AnetAPI\AnetApiResponseType
      */
-    public function processUpdateCustomerProfileRequest($profileId, $customerId, $email, $description)
+    public function processUpdateCustomerProfileRequest($profileId, $customerId, $email)
     {
         $customerProfile = new AnetAPI\CustomerProfileExType();
         $customerProfile
             ->setCustomerProfileId($profileId)
             ->setMerchantCustomerId($customerId)
-            ->setDescription($description)
             ->setEmail($email)
         ;
 
@@ -222,21 +221,19 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
         $response = $controller->executeWithApiResponse($this->_mode);
 
         if (($response != null)) {
-            if ($response->getMessages()->getResultCode() == "Ok") {
-                echo "UpdateCustomerProfile SUCCESS : " . "\n";
+            if ($response->getMessages()->getResultCode() == 'Ok') {
+                Mage::log('Customer Profile has been updated: ' . $profileId . '/' . $customerId . '/' . $email, Zend_Log::DEBUG, 'cv_acim.log');
+                return $response;
             } else {
                 Mage::throwException(
-                    Mage::helper('corevalue_acim')->__("UpdateCustomerProfile ") .
-                    Mage::helper('corevalue_acim')->__(" Error code: ") . $response->getMessages()->getMessage()[0]->getCode() . "\n".
-                    Mage::helper('corevalue_acim')->__(" Error message: ") . $response->getMessages()->getMessage()[0]->getText() . "\n"
+                    Mage::helper('corevalue_acim')->__('processUpdateCustomerProfileRequest()') .
+                    Mage::helper('corevalue_acim')->__('Error code: ') . $response->getMessages()->getMessage()[0]->getCode() . "\n".
+                    Mage::helper('corevalue_acim')->__('Error message: ') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
@@ -319,19 +316,19 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                     Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
+
+            // saving payment profile to DB
+            $helper->saveCustomerPaymentProfile(
+                $customerProfileId,
+                $response->getCustomerPaymentProfileId(),
+                $data->getCustomer(),
+                $data->getCard()
+            );
+
+            return $response;
         }
 
-        // saving payment profile to DB
-        $helper->saveCustomerPaymentProfile(
-            $customerProfileId,
-            $response->getCustomerPaymentProfileId(),
-            $data->getCustomer(),
-            $data->getCard()
-        );
-
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
@@ -429,24 +426,24 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                     Mage::helper('corevalue_acim')->__('Error message: ') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
+
+            // saving payment profile to DB
+            $helper->saveCustomerPaymentProfile(
+                $customerProfileId,
+                $paymentProfileId,
+                $data->getCustomer(),
+                $data->getCard()
+            );
+
+            return $response;
         }
 
-
-        // saving payment profile to DB
-        $helper->saveCustomerPaymentProfile(
-            $customerProfileId,
-            $paymentProfileId,
-            $data->getCustomer(),
-            $data->getCard()
-        );
-
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 
     /**
+     * Deleting payment profile request.
+     *
      * @param $profileId
      * @param $paymentId
      * @return object
@@ -516,11 +513,10 @@ class CoreValue_Acim_Helper_CustomerProfiles extends Mage_Core_Helper_Abstract
                     Mage::helper('corevalue_acim')->__('Error message:') . $response->getMessages()->getMessage()[0]->getText() . "\n"
                 );
             }
-        } else {
-            Mage::log('No response returned', Zend_Log::DEBUG, 'cv_acim.log');
-            Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
+
+            return $response;
         }
 
-        return $response;
+        Mage::throwException(Mage::helper('corevalue_acim')->__('No response returned.'));
     }
 }
