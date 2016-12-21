@@ -59,7 +59,7 @@ class CoreValue_Acim_Block_Adminhtml_Customer_Tab_List
      */
     public function isHidden()
     {
-        return $this->getCollection()->count() ? false : true;
+        return (!Mage::getSingleton('admin/session')->isAllowed('customer/corevalue_acim') || $this->getCollection()->count()) ? false : true;
     }
 
     /**
