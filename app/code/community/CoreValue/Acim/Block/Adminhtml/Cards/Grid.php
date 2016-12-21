@@ -1,8 +1,14 @@
 <?php
 
+/**
+ * Class CoreValue_Acim_Block_Adminhtml_Cards_Grid
+ */
 class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Widget_Grid
 {
 
+    /**
+     * CoreValue_Acim_Block_Adminhtml_Cards_Grid constructor.
+     */
     public function __construct()
     {
         parent::__construct();
@@ -13,14 +19,21 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
         $this->setSaveParametersInSession(true);
     }
 
+    /**
+     * @return mixed
+     */
     protected function _prepareCollection()
     {
         $collection = Mage::getResourceModel('corevalue_acim/profile_payment_collection');
+        $collection->addCustomerNameToSelect();
 
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }
 
+    /**
+     * @return mixed
+     */
     protected function _prepareColumns()
     {
         $this->addColumn('customer_id', array(
@@ -41,14 +54,30 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
             'width'             => 1,
         ));
 
-        $this->addColumn('cc_type', array(
-            'header'            => $this->__('Credit Card Type'),
-            'index'             => 'cc_type',
+        $this->addColumn('email', array(
+            'header'            => $this->__('Email'),
+            'index'             => 'email',
             'width'             => 1,
         ));
 
+        $this->addColumn('fullname', array(
+            'header'            => $this->__('Name'),
+            'index'             => 'fullname',
+            'width'             => 1,
+            'filter'            => false,
+            'sortable'          => false
+        ));
+
+        $this->addColumn('cc_type', array(
+            'header'            => $this->__('CC Type'),
+            'index'             => 'cc_type',
+            'width'             => 1,
+            'filter'            => false,
+            'sortable'          => false
+        ));
+
         $this->addColumn('cc_last4', array(
-            'header'            => $this->__('Credit Card Number'),
+            'header'            => $this->__('CC Number'),
             'index'             => 'cc_last4',
             'filter'            => false,
             'sortable'          => false,
@@ -90,11 +119,18 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
         return parent::_prepareColumns();
     }
 
+    /**
+     * @return mixed
+     */
     public function getGridUrl()
     {
         return $this->getUrl('*/*/grid', array('_current' => true));
     }
 
+    /**
+     * @param $row
+     * @return mixed
+     */
     public function getRowUrl($row)
     {
         return $this->getUrl('*/*/edit', array('id' => $row->getId()));

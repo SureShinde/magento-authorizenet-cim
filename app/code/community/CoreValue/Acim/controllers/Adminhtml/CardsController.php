@@ -1,8 +1,14 @@
 <?php
 
+/**
+ * Class CoreValue_Acim_Adminhtml_CardsController
+ */
 class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller_Action
 {
 
+    /**
+     * Displaying list of Credit Cards
+     */
     public function indexAction()
     {
         $this
