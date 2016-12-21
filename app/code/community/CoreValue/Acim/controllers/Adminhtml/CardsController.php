@@ -29,4 +29,14 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
             $this->getLayout()->createBlock('corevalue_acim/adminhtml_cards_grid')->toHtml()
         );
     }
+
+    /**
+     * Check the permission to run it
+     *
+     * @return boolean
+     */
+    protected function _isAllowed()
+    {
+        return Mage::getSingleton('admin/session')->isAllowed('customer/corevalue_acim');
+    }
 }

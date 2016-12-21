@@ -99,6 +99,22 @@
                 </children>
             </customer>
         </menu>
+
+        <acl>
+            <resources>
+                <admin>
+                    <children>
+                        <customer>
+                            <children>
+                                <corevalue_acim translate="title" module="corevalue_acim">
+                                    <title>Manage Credit Cards</title>
+                                </corevalue_acim>
+                            </children>
+                        </customer>
+                    </children>
+                </admin>
+            </resources>
+        </acl>
     </adminhtml>
 
     <admin>
