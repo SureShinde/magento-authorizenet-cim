@@ -1,8 +1,31 @@
 <?xml version="1.0"?>
-<layout version="0.1.0">
-    <!--<checkout_onepage_index>
-        <reference name="head">
-            <action method="addJs"><file>path/acim.js</file></action>
+<layout>
+    <adminhtml_customer_edit>
+        <reference name="customer_edit_tabs">
+            <action method="addTab">
+                <name>customer_acim_list</name>
+                <block>corevalue_acim/adminhtml_customer_tab_list</block>
+            </action>
         </reference>
-    </checkout_onepage_index>-->
+    </adminhtml_customer_edit>
+
+    <adminhtml_acim_index>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_acim" name="corevalue.acim"></block>
+        </reference>
+    </adminhtml_acim_index>
+
+    <!--<adminhtml_acim_grid>
+        <block type="core/text_list" name="root" output="toHtml">
+            <block type="corevalue_acim/adminhtml_acim_grid" name="corevalue.acim.grid"/>
+        </block>
+    </adminhtml_acim_grid>-->
+
+
+
+    <adminhtml_cards_index>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_cards" name="corevalue.acim.cards"></block>
+        </reference>
+    </adminhtml_cards_index>
 </layout>

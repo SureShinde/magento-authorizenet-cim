@@ -79,6 +79,40 @@
         </routers>
     </frontend>
 
+    <adminhtml>
+        <layout>
+            <updates>
+                <corevalue_acim>
+                    <file>corevalue_acim.xml</file>
+                </corevalue_acim>
+            </updates>
+        </layout>
+
+        <menu>
+            <customer>
+                <children>
+                    <corevalue_acim>
+                        <title>Manage Credit Cards</title>
+                        <action>adminhtml/cards/index</action>
+                        <sort_order>60</sort_order>
+                    </corevalue_acim>
+                </children>
+            </customer>
+        </menu>
+    </adminhtml>
+
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <acim before="Mage_Adminhtml">CoreValue_Acim_Adminhtml</acim>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+
     <default>
         <payment>
             <corevalue_acim>
