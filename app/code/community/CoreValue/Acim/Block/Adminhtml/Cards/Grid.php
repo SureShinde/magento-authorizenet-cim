@@ -36,20 +36,14 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
      */
     protected function _prepareColumns()
     {
-        $this->addColumn('customer_id', array(
-            'header'            => $this->__('Customer Id'),
-            'index'             => 'customer_id',
-            'width'             => 1,
-        ));
-
         $this->addColumn('profile_id', array(
-            'header'            => $this->__('Customer Profile Id'),
+            'header'            => $this->__('Profile Id'),
             'index'             => 'profile_id',
             'width'             => 1,
         ));
 
         $this->addColumn('payment_id', array(
-            'header'            => $this->__('Payment Profile Id'),
+            'header'            => $this->__('Payment Id'),
             'index'             => 'payment_id',
             'width'             => 1,
         ));
@@ -57,13 +51,11 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
         $this->addColumn('email', array(
             'header'            => $this->__('Email'),
             'index'             => 'email',
-            'width'             => 1,
         ));
 
         $this->addColumn('fullname', array(
             'header'            => $this->__('Name'),
             'index'             => 'fullname',
-            'width'             => 1,
             'filter'            => false,
             'sortable'          => false
         ));
@@ -71,7 +63,8 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
         $this->addColumn('cc_type', array(
             'header'            => $this->__('CC Type'),
             'index'             => 'cc_type',
-            'width'             => 1,
+            'type'              => 'options',
+            'options'           => Mage::getBlockSingleton('corevalue_acim/card')->getCcAvailableTypes()
         ));
 
         $this->addColumn('cc_last4', array(
@@ -81,18 +74,15 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
         ));
 
         $this->addColumn('expiration_date', array(
-            'header'            => $this->__('Expiration Date'),
+            'header'            => $this->__('Exp. Date'),
             'index'             => 'expiration_date',
-            'width'             => 1,
-            'filter'            => false,
-            'sortable'          => false
         ));
 
         $this->addColumn('created_at', array(
             'header'            => $this->__('Added'),
             'index'             => 'created_at',
+            'width'             => '180px',
             'type'              => 'datetime',
-            'width'             => 1,
         ));
 
         $this->addColumn('action', array(
