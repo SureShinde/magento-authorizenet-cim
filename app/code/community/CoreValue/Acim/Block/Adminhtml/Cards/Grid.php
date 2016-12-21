@@ -72,15 +72,11 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
             'header'            => $this->__('CC Type'),
             'index'             => 'cc_type',
             'width'             => 1,
-            'filter'            => false,
-            'sortable'          => false
         ));
 
         $this->addColumn('cc_last4', array(
             'header'            => $this->__('CC Number'),
             'index'             => 'cc_last4',
-            'filter'            => false,
-            'sortable'          => false,
             'renderer'          => 'CoreValue_Acim_Block_Adminhtml_Customer_Tab_Renderer_Number'
         ));
 
