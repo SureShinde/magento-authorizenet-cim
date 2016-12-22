@@ -20,4 +20,10 @@
             <block type="corevalue_acim/adminhtml_cards_edit" name="corevalue.acim.cards.edit"></block>
         </reference>
     </adminhtml_cards_edit>
+
+    <adminhtml_cards_choose>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_customer" name="corevalue.acim.customer"></block>
+        </reference>
+    </adminhtml_cards_choose>
 </layout>

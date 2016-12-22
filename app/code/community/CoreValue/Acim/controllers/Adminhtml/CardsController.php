@@ -68,6 +68,16 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
         echo $states;
     }
 
+    public function chooseAction()
+    {
+        $this
+            ->loadLayout()
+            ->_setActiveMenu('customer/corevalue_acim')
+            ->_addBreadcrumb(Mage::helper('corevalue_acim')->__('Credit Cards'), Mage::helper('corevalue_acim')->__('Choose Customer'))
+            ->renderLayout()
+        ;
+    }
+
     public function saveAction()
     {
         /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */

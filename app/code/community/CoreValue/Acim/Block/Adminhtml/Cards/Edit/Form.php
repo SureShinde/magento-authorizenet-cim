@@ -97,7 +97,7 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Edit_Form extends Mage_Adminhtml_Bloc
         ));
 
         $billToFieldSet->addField('city', 'text', array(
-            'label'                 => $helper->__('Address'),
+            'label'                 => $helper->__('City'),
             'class'                 => 'required-entry',
             'required'              => true,
             'name'                  => 'city',

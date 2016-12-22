@@ -15,5 +15,11 @@ class CoreValue_Acim_Block_Adminhtml_Cards extends Mage_Adminhtml_Block_Widget_G
         $this->_headerText      = Mage::helper('corevalue_acim')->__('Manage Credit Cards');
         parent::__construct();
         $this->_removeButton('add');
+
+        $this->_addButton('choose', [
+            'label'   => Mage::helper('corevalue_acim')->__('New'),
+            'onclick' => "setLocation('{$this->getUrl('*/*/choose')}')",
+            'class'   => 'add'
+        ]);
     }
 }
