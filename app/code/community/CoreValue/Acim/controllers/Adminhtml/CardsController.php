@@ -30,6 +30,9 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
         );
     }
 
+    /**
+     * @return mixed
+     */
     public function editAction()
     {
         // getting get params from request object
@@ -52,6 +55,9 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
         ;
     }
 
+    /**
+     * Retrieving list of states for specific country
+     */
     public function stateAction()
     {
         /* @var $helperProfile CoreValue_Acim_Helper_Data */
@@ -68,6 +74,9 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
         echo $states;
     }
 
+    /**
+     * Displaying grid with list of customers available for CC creation
+     */
     public function chooseAction()
     {
         $this
@@ -78,6 +87,11 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
         ;
     }
 
+    /**
+     * Saving CC info
+     *
+     * @return mixed
+     */
     public function saveAction()
     {
         /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
@@ -163,7 +177,34 @@ class CoreValue_Acim_Adminhtml_CardsController extends Mage_Adminhtml_Controller
             Mage::getSingleton('core/session')->addError($this->__('Error occurs while trying to delete the credit card'));
         }
 
-        Mage::getSingleton('core/session')->addSuccess($this->__('The Credit Card has been updated'));
+        Mage::getSingleton('core/session')->addSuccess(
+            $this->__('The Credit Card has been deleted') . ': XXXX-' . $paymentProfile->getCcLast4()
+        );
+        return $this->_redirect('*/*/index');
+    }
+
+    public function massDeleteAction()
+    {
+        // getting list of IDs
+        $ids = Mage::app()->getRequest()->getPost('massaction');
+
+        /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
+        $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
+
+        // going over all IDs
+        foreach ($ids as $id) {
+            try {
+                $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load($id);
+                $helperProfile->processDeletePaymentProfileRequest($paymentProfile->getProfileId(), $paymentProfile->getPaymentId());
+                $paymentProfile->delete();
+                Mage::getSingleton('core/session')->addSuccess(
+                    $this->__('The Credit Card been deleted') . ': XXXX-' . $paymentProfile->getCcLast4()
+                );
+            } catch (Exception $e) {
+                Mage::getSingleton('core/session')->addError($this->__('Error occurs while trying to delete the credit card'));
+            }
+        }
+
         return $this->_redirect('*/*/index');
     }
 

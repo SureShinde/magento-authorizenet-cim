@@ -37,6 +37,12 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
      */
     protected function _prepareColumns()
     {
+        $this->addColumn('id', array(
+            'header'            => $this->__('#'),
+            'index'             => 'id',
+            'width'             => 1,
+        ));
+
         $this->addColumn('profile_id', array(
             'header'            => $this->__('Profile Id'),
             'index'             => 'profile_id',
@@ -121,5 +127,18 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
     public function getRowUrl($row)
     {
         return $this->getUrl('*/*/edit', array('id' => $row->getId(), 'customer_id' => $row->getCustomerId()));
+    }
+
+    protected function _prepareMassaction()
+    {
+        $this->setMassactionIdField('id');
+
+        $this->getMassactionBlock()->addItem('delete', array(
+            'label'    => $this->__('Delete'),
+            'url'      => $this->getUrl('*/*/massDelete'),
+            'confirm'  => $this->__('Are you really sure that you want to delete all this credit cards?')
+        ));
+
+        return $this;
     }
 }
