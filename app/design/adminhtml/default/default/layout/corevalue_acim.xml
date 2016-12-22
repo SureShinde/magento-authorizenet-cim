@@ -9,23 +9,15 @@
         </reference>
     </adminhtml_customer_edit>
 
-    <adminhtml_acim_index>
-        <reference name="content">
-            <block type="corevalue_acim/adminhtml_acim" name="corevalue.acim"></block>
-        </reference>
-    </adminhtml_acim_index>
-
-    <!--<adminhtml_acim_grid>
-        <block type="core/text_list" name="root" output="toHtml">
-            <block type="corevalue_acim/adminhtml_acim_grid" name="corevalue.acim.grid"/>
-        </block>
-    </adminhtml_acim_grid>-->
-
-
-
     <adminhtml_cards_index>
         <reference name="content">
             <block type="corevalue_acim/adminhtml_cards" name="corevalue.acim.cards"></block>
         </reference>
     </adminhtml_cards_index>
+
+    <adminhtml_cards_edit>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_cards_edit" name="corevalue.acim.cards.edit"></block>
+        </reference>
+    </adminhtml_cards_edit>
 </layout>

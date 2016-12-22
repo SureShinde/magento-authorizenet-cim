@@ -72,11 +72,6 @@ class CoreValue_Acim_Block_Adminhtml_Customer_Tab_List
         return 'orders';
     }
 
-    protected function _prepareCollection()
-    {
-        return parent::_prepareCollection();
-    }
-
     protected function _prepareColumns()
     {
         $this->addColumn('profile_id', array(
@@ -142,7 +137,7 @@ class CoreValue_Acim_Block_Adminhtml_Customer_Tab_List
 
     public function getRowUrl($row)
     {
-        return $this->getUrl('*/acim/view', ['id' => $row->getId()]);
+        return $this->getUrl('*/acim/edit', ['id' => $row->getId(), 'customer_id' => $row->getCustomerId()]);
     }
 
     public function getGridUrl()

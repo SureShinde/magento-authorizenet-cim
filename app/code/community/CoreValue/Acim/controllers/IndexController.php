@@ -144,6 +144,7 @@ class CoreValue_Acim_IndexController extends Mage_Core_Controller_Front_Action
             return $this->_redirect('acimprofiles/index/edit', ['id' => $paymentProfile->getId()]);
         }
 
+        Mage::getSingleton('core/session')->addSuccess($this->__('The Credit Card has been updated'));
         return $this->_redirect('acimprofiles');
     }
 

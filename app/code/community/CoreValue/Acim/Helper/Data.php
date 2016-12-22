@@ -436,4 +436,55 @@ class CoreValue_Acim_Helper_Data extends Mage_Core_Helper_Abstract
             ]),
         ]);
     }
+
+    /**
+     * Preparing data for credit card add/edit form in Magento admin interface
+     *
+     * @param int $customerId
+     * @param int $paymentId
+     * @return bool
+     */
+    public function prepareFormData($customerId, $paymentId)
+    {
+        /* @var $customer Mage_Customer_Model_Customer */
+        $customer       = Mage::getModel('customer/customer')->load($customerId);
+        /* @var $paymentProfile CoreValue_Acim_Model_Profile_Payment */
+        $paymentProfile = Mage::getModel('corevalue_acim/profile_payment')->load($paymentId);
+
+        if (!$customer->getId() && !$paymentProfile->getPaymentId()) {
+            return false;
+        }
+
+        /* @var $helperProfile CoreValue_Acim_Helper_CustomerProfiles */
+        $helperProfile          = Mage::helper('corevalue_acim/customerProfiles');
+
+        if ($paymentProfile->getPaymentId()) {
+            $resource = $helperProfile->processGetCustomerPaymentProfileRequest(
+                $paymentProfile->getProfileId(),
+                $paymentProfile->getPaymentId()
+            );
+        } else {
+            $resource = new Varien_Object([
+                'credit_card'   => new Varien_Object([]),
+                'bill_to'       => new Varien_Object([]),
+            ]);
+        }
+        $resource->setPaymentProfile($paymentProfile);
+        $resource->setCustomere($customer);
+
+        Mage::register('form_data', $resource);
+
+        return true;
+    }
+
+    public function getStatesArray($countryCode)
+    {
+        $array      = [];
+        $collection = Mage::getResourceModel('directory/region_collection')->addCountryFilter($countryCode);
+        foreach ($collection as $state) {
+            //$array[] = ['value' => $state->getCode(), 'label' => $state->getDefaultName()];
+            $array[] = ['value' => $state->getDefaultName(), 'label' => $state->getDefaultName()];
+        }
+        return $array;
+    }
 }

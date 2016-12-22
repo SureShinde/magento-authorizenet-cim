@@ -26,6 +26,7 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
     {
         $collection = Mage::getResourceModel('corevalue_acim/profile_payment_collection');
         $collection->addCustomerNameToSelect();
+        $collection->setOrder('id', 'DESC');
 
         $this->setCollection($collection);
         return parent::_prepareCollection();
@@ -119,6 +120,6 @@ class CoreValue_Acim_Block_Adminhtml_Cards_Grid extends Mage_Adminhtml_Block_Wid
      */
     public function getRowUrl($row)
     {
-        return $this->getUrl('*/*/edit', array('id' => $row->getId()));
+        return $this->getUrl('*/*/edit', array('id' => $row->getId(), 'customer_id' => $row->getCustomerId()));
     }
 }
