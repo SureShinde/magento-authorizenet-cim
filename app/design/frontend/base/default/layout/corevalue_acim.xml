@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+    <acimprofiles_index_index>
+        <update handle="customer_account"/>
+
+        <reference name="content">
+            <block type="corevalue_acim/list"></block>
+        </reference>
+    </acimprofiles_index_index>
+
+    <acimprofiles_index_add>
+        <update handle="customer_account"/>
+
+        <reference name="content">
+            <block type="corevalue_acim/card"></block>
+        </reference>
+    </acimprofiles_index_add>
+
+    <acimprofiles_index_edit>
+        <update handle="customer_account"/>
+
+        <reference name="content">
+            <block type="corevalue_acim/card"></block>
+        </reference>
+    </acimprofiles_index_edit>
+
+    <customer_account translate="label">
+        <reference name="customer_account_navigation">
+            <action method="addLink" translate="label">
+                <name>profiles</name>
+                <path>acimprofiles</path>
+                <label>My Credit Cards</label>
+            </action>
+        </reference>
+    </customer_account>
+</layout>

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<layout>
+    <adminhtml_customer_edit>
+        <reference name="customer_edit_tabs">
+            <action method="addTab">
+                <name>customer_acim_list</name>
+                <block>corevalue_acim/adminhtml_customer_tab_list</block>
+            </action>
+        </reference>
+    </adminhtml_customer_edit>
+
+    <adminhtml_cards_index>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_cards" name="corevalue.acim.cards"></block>
+        </reference>
+    </adminhtml_cards_index>
+
+    <adminhtml_cards_edit>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_cards_edit" name="corevalue.acim.cards.edit"></block>
+        </reference>
+    </adminhtml_cards_edit>
+
+    <adminhtml_cards_choose>
+        <reference name="content">
+            <block type="corevalue_acim/adminhtml_customer" name="corevalue.acim.customer"></block>
+        </reference>
+    </adminhtml_cards_choose>
+</layout>

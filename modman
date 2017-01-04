@@ -1,3 +1,8 @@
-# CoreValue_AuthorizeNetCim
-# app/etc/modules/CoreValue_AuthorizeNetCim.xml                             app/etc/modules/CoreValue_AuthorizeNetCim.xml
+# CoreValue_Acim
+app/etc/modules/CoreValue_Acim.xml                                          app/etc/modules/CoreValue_Acim.xml
 lib/AuthorizeNetSDK/*                                                       lib/AuthorizeNetSDK/
+app/code/community/CoreValue/Acim/*                                         app/code/community/CoreValue/Acim/
+app/design/frontend/base/default/template/corevalue/acim/*                  app/design/frontend/base/default/template/corevalue/acim/
+app/design/frontend/base/default/layout/corevalue_acim.xml                  app/design/frontend/base/default/layout/corevalue_acim.xml
+app/design/adminhtml/default/default/template/corevalue/acim/*              app/design/adminhtml/default/default/template/corevalue/acim/
+app/design/adminhtml/default/default/layout/corevalue_acim.xml              app/design/adminhtml/default/default/layout/corevalue_acim.xml

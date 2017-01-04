@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <CoreValue_Acim>
+            <active>true</active>
+            <codePool>community</codePool>
+        </CoreValue_Acim>
+    </modules>
+</config>
